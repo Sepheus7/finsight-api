@@ -1,0 +1,257 @@
+# AWS SAM Template for Financial AI Quality Enhancement API
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Financial AI Quality Enhancement API - Serverless Architecture
+  
+  A serverless API that enhances AI-generated financial advice with real-time 
+  fact-checking, context enrichment, compliance detection, and quality scoring.
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: python3.11
+    Environment:
+      Variables:
+        DYNAMODB_TABLE: !Ref EnhancementHistoryTable
+        S3_BUCKET: !Ref DataCacheBucket
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Deployment stage
+
+Resources:
+  # API Gateway
+  FinancialAIApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Stage
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: AWS_IAM
+
+  # Lambda Functions
+  
+  # Main Enhancement Function
+  EnhanceResponseFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: enhance_handler.lambda_handler
+      Description: Main endpoint to enhance AI responses
+      Events:
+        EnhanceApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FinancialAIApi
+            Path: /enhance
+            Method: post
+      Environment:
+        Variables:
+          FACT_CHECK_FUNCTION: !Ref FactCheckFunction
+          CONTEXT_ENRICHMENT_FUNCTION: !Ref ContextEnrichmentFunction
+          COMPLIANCE_CHECK_FUNCTION: !Ref ComplianceCheckFunction
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource:
+                - !GetAtt FactCheckFunction.Arn
+                - !GetAtt ContextEnrichmentFunction.Arn
+                - !GetAtt ComplianceCheckFunction.Arn
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EnhancementHistoryTable
+
+  # Fact Checking Function
+  FactCheckFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: fact_check_handler.lambda_handler
+      Description: Verify financial claims and statements
+      Timeout: 60
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref DataCacheBucket
+        - S3WritePolicy:
+            BucketName: !Ref DataCacheBucket
+
+  # Context Enrichment Function
+  ContextEnrichmentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: context_enrichment_handler.lambda_handler
+      Description: Add relevant financial context to responses
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref DataCacheBucket
+
+  # Compliance Checking Function
+  ComplianceCheckFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: compliance_handler.lambda_handler
+      Description: Check for regulatory compliance issues
+      Environment:
+        Variables:
+          COMPLIANCE_RULES_TABLE: !Ref ComplianceRulesTable
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ComplianceRulesTable
+
+  # Health Check Function
+  HealthCheckFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: health_handler.lambda_handler
+      Description: API health check endpoint
+      Events:
+        HealthApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FinancialAIApi
+            Path: /health
+            Method: get
+            Auth:
+              Authorizer: NONE
+
+  # Root Info Function
+  RootFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: root_handler.lambda_handler
+      Description: API information endpoint
+      Events:
+        RootApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FinancialAIApi
+            Path: /
+            Method: get
+            Auth:
+              Authorizer: NONE
+
+  # DynamoDB Tables
+  EnhancementHistoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-enhancement-history'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  ComplianceRulesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-compliance-rules'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: rule_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: rule_id
+          KeyType: HASH
+
+  # S3 Bucket for Data Caching
+  DataCacheBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${AWS::StackName}-data-cache-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldCacheData
+            Status: Enabled
+            ExpirationInDays: 7
+
+  # CloudWatch Log Groups
+  EnhanceResponseLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${EnhanceResponseFunction}'
+      RetentionInDays: 30
+
+  FactCheckLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${FactCheckFunction}'
+      RetentionInDays: 30
+
+  # IAM Role for API Gateway CloudWatch Logging
+  ApiGatewayCloudWatchLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: ApiGatewayLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                  - logs:GetLogEvents
+                  - logs:FilterLogEvents
+                Resource: '*'
+
+Outputs:
+  FinancialAIApiUrl:
+    Description: "API Gateway endpoint URL for Financial AI Quality API"
+    Value: !Sub "https://${FinancialAIApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiUrl"
+
+  EnhancementHistoryTableName:
+    Description: "DynamoDB table name for enhancement history"
+    Value: !Ref EnhancementHistoryTable
+    Export:
+      Name: !Sub "${AWS::StackName}-HistoryTable"
+
+  DataCacheBucketName:
+    Description: "S3 bucket name for data caching"
+    Value: !Ref DataCacheBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-CacheBucket"

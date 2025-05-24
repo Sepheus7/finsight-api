@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSight - AI Quality Enhancement Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .hero-section {
+            text-align: center;
+            color: white;
+            padding: 60px 20px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero-section h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .hero-section .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            margin-bottom: 15px;
+        }
+
+        .hero-section .description {
+            font-size: 1.1rem;
+            opacity: 0.85;
+            max-width: 600px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+        }
+
+        .value-props {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .value-prop {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .value-prop i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+
+        .value-prop h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .value-prop p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .demo-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 40px;
+        }
+
+        .demo-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .demo-header h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .demo-content {
+            padding: 40px;
+        }
+
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .content-panel {
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 2px solid #e1e5e9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-header.before {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .panel-header.after {
+            background: #d1edff;
+            color: #0c5460;
+        }
+
+        .panel-content {
+            padding: 20px;
+            min-height: 200px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .sample-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .sample-input {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .sample-input:hover {
+            background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .sample-input.active {
+            border-color: #1976d2;
+            background: linear-gradient(135deg, #90caf9 0%, #64b5f6 100%);
+        }
+
+        .sample-input h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sample-input p {
+            font-size: 0.9rem;
+            color: #424242;
+        }
+
+        .input-section textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 150px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-section textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .option-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option-card:hover {
+            border-color: #4facfe;
+            transform: translateY(-2px);
+        }
+
+        .option-card.active {
+            border-color: #4facfe;
+            background: linear-gradient(135deg, #4facfe10, #00f2fe10);
+        }
+
+        .option-card i {
+            font-size: 2rem;
+            color: #4facfe;
+            margin-bottom: 10px;
+        }
+
+        .option-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .option-card p {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .quality-dashboard {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .quality-score-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #28a745 0deg, #28a745 var(--score-angle, 0deg), #e9ecef var(--score-angle, 0deg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .score-circle::before {
+            content: '';
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .score-circle.low {
+            background: conic-gradient(from 0deg, #dc3545 0deg, #dc3545 var(--score-angle, 0deg), #e9ecef var(--score-angle, 0deg));
+        }
+
+        .score-circle.medium {
+            background: conic-gradient(from 0deg, #ffc107 0deg, #ffc107 var(--score-angle, 0deg), #e9ecef var(--score-angle, 0deg));
+        }
+
+        .score-value {
+            position: relative;
+            z-index: 1;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric {
+            text-align: center;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4facfe;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #28a745;
+        }
+
+        .result-card.warning {
+            border-left-color: #ffc107;
+        }
+
+        .result-card.error {
+            border-left-color: #dc3545;
+        }
+
+        .result-card h3 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fact-check-item, .compliance-item, .context-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .fact-check-item.verified {
+            border-left: 4px solid #28a745;
+        }
+
+        .fact-check-item.unverified {
+            border-left: 4px solid #ffc107;
+        }
+
+        .confidence-bar {
+            background: #e9ecef;
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            background: linear-gradient(90deg, #dc3545, #ffc107, #28a745);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .api-info {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 40px;
+        }
+
+        .api-info h3 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .api-endpoint {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+
+            .before-after {
+                grid-template-columns: 1fr;
+            }
+            
+            .demo-content {
+                padding: 20px;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quality-score-display {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1><i class="fas fa-chart-line"></i> FinSight</h1>
+        <p class="subtitle">AI Quality Enhancement Platform for Financial Content</p>
+        <p class="description">
+            Transform unreliable AI-generated financial content into trustworthy, compliant, and context-rich insights. 
+            Our API adds fact-checking, regulatory compliance, and market context to any financial AI output.
+        </p>
+        
+        <div class="value-props">
+            <div class="value-prop">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Regulatory Compliance</h3>
+                <p>Automatically detect and flag potential compliance violations in investment advice and financial recommendations</p>
+            </div>
+            <div class="value-prop">
+                <i class="fas fa-search"></i>
+                <h3>Real-time Fact Checking</h3>
+                <p>Verify financial claims, stock prices, and market data against reliable sources</p>
+            </div>
+            <div class="value-prop">
+                <i class="fas fa-brain"></i>
+                <h3>Context Enrichment</h3>
+                <p>Add relevant market context, historical data, and educational information to enhance understanding</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Main Demo -->
+        <div class="demo-container">
+            <div class="demo-header">
+                <h2>Live API Demo</h2>
+                <p>Experience how FinSight transforms raw AI content into professional-grade financial insights</p>
+            </div>
+
+            <div class="demo-content">
+                <!-- Before/After Comparison -->
+                <div class="before-after">
+                    <div class="content-panel">
+                        <div class="panel-header before">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Before: Raw AI Output</strong>
+                        </div>
+                        <div class="panel-content" id="before-content">
+                            Select a sample scenario below to see the transformation...
+                        </div>
+                    </div>
+                    <div class="content-panel">
+                        <div class="panel-header after">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>After: FinSight Enhanced</strong>
+                        </div>
+                        <div class="panel-content" id="after-content">
+                            Enhanced content will appear here after analysis...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample Scenarios -->
+                <div class="input-section">
+                    <label>Try these realistic financial AI scenarios:</label>
+                    <div class="sample-inputs">
+                        <div class="sample-input" onclick="loadSample('investment')">
+                            <h4><i class="fas fa-chart-bar"></i> Risky Investment Advice</h4>
+                            <p>AI content with compliance violations and unverified claims</p>
+                        </div>
+                        <div class="sample-input" onclick="loadSample('market')">
+                            <h4><i class="fas fa-globe"></i> Market Analysis</h4>
+                            <p>Technical content that needs context and fact verification</p>
+                        </div>
+                        <div class="sample-input" onclick="loadSample('crypto')">
+                            <h4><i class="fab fa-bitcoin"></i> Crypto Discussion</h4>
+                            <p>Balanced content with good quality score</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Input -->
+                <div class="input-section">
+                    <label for="content-input">Or enter your own financial AI content:</label>
+                    <textarea id="content-input" placeholder="Paste any AI-generated financial content here (investment advice, market analysis, trading recommendations, etc.)"></textarea>
+                </div>
+
+                <!-- Enhancement Options -->
+                <div class="options-grid">
+                    <div class="option-card active" data-option="fact-check">
+                        <i class="fas fa-search"></i>
+                        <h3>Fact Checking</h3>
+                        <p>Verify claims and data</p>
+                    </div>
+                    <div class="option-card active" data-option="context">
+                        <i class="fas fa-plus-circle"></i>
+                        <h3>Context Enrichment</h3>
+                        <p>Add market insights</p>
+                    </div>
+                    <div class="option-card active" data-option="compliance">
+                        <i class="fas fa-gavel"></i>
+                        <h3>Compliance Check</h3>
+                        <p>Regulatory validation</p>
+                    </div>
+                </div>
+
+                <!-- Analyze Button -->
+                <button id="analyze-btn" class="analyze-btn" onclick="enhanceContent()">
+                    <i class="fas fa-magic"></i> Enhance Content with FinSight
+                </button>
+
+                <!-- Results Section -->
+                <div id="results-section" class="results-section" style="display: none;">
+                    <!-- Quality Dashboard -->
+                    <div class="quality-dashboard">
+                        <h3><i class="fas fa-tachometer-alt"></i> Quality Assessment</h3>
+                        <div class="quality-score-display">
+                            <div class="score-circle" id="quality-circle">
+                                <div class="score-value" id="quality-score">0.00</div>
+                            </div>
+                            <div>
+                                <h4>Content Quality Score</h4>
+                                <p id="quality-description">Analyzing content...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="performance-metrics">
+                            <div class="metric">
+                                <div class="metric-value" id="processing-time">--</div>
+                                <div class="metric-label">Processing Time (ms)</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" id="fact-checks-count">--</div>
+                                <div class="metric-label">Claims Verified</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" id="context-count">--</div>
+                                <div class="metric-label">Context Added</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" id="compliance-count">--</div>
+                                <div class="metric-label">Compliance Issues</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Results -->
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <h3><i class="fas fa-search" style="color: #17a2b8;"></i> Fact Check Results</h3>
+                            <div id="fact-checks-results"></div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h3><i class="fas fa-gavel" style="color: #dc3545;"></i> Compliance Analysis</h3>
+                            <div id="compliance-results"></div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h3><i class="fas fa-plus-circle" style="color: #28a745;"></i> Context Enrichment</h3>
+                            <div id="context-results"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Information -->
+        <div class="api-info">
+            <h3><i class="fas fa-code"></i> Live API Integration</h3>
+            <p>This demo is powered by our production AWS serverless API. All results are generated in real-time using the same infrastructure that powers enterprise integrations.</p>
+            
+            <div class="api-endpoint">
+                POST https://6akbbnz5hf.execute-api.us-east-1.amazonaws.com/dev/enhance
+            </div>
+            
+            <p><i class="fas fa-cloud"></i> Deployed on AWS Lambda with DynamoDB and S3 storage</p>
+            <p><i class="fas fa-clock"></i> Average response time: ~8 seconds for comprehensive analysis</p>
+            <p><i class="fas fa-shield-alt"></i> Enterprise-ready with authentication and rate limiting</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2024 FinSight - Transforming AI-Generated Financial Content</p>
+        <p>Built with AWS Lambda, DynamoDB, and modern web technologies</p>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://6akbbnz5hf.execute-api.us-east-1.amazonaws.com/dev';
+
+        const sampleScenarios = {
+            investment: {
+                title: "Risky Investment Advice",
+                content: `AAPL stock is currently trading at $150 and I recommend buying it immediately. This is a guaranteed profitable investment that will definitely make you money. 
+
+Based on my analysis, Apple stock will increase by 50% in the next month. You should invest all your savings into AAPL right now for maximum returns.
+
+Trust me, this is insider information and you can't lose money on this trade. Apple is going to announce revolutionary products that will skyrocket the stock price.`,
+                issues: "Contains compliance violations, unverified claims, and lacks proper disclaimers"
+            },
+            market: {
+                title: "Market Analysis",
+                content: `The S&P 500 has shown strong performance this quarter, with technology stocks leading the gains. Market volatility remains elevated due to ongoing economic uncertainties.
+
+Current market indicators suggest a bullish trend, with the VIX trading below 20. Institutional investors are showing increased confidence in large-cap technology stocks.
+
+Economic data releases this week will likely impact market direction, particularly the employment figures and inflation data.`,
+                issues: "Factual content that needs verification and additional context"
+            },
+            crypto: {
+                title: "Crypto Discussion",
+                content: `Cryptocurrency markets continue to evolve with increasing institutional adoption. Bitcoin and Ethereum remain the dominant digital assets by market capitalization.
+
+Regulatory clarity in major markets will likely influence crypto adoption rates. Investors should carefully consider the risks associated with digital asset investments.
+
+Diversification across different asset classes remains important for portfolio management. Consider consulting with a financial advisor before making investment decisions.`,
+                issues: "Well-balanced content with appropriate disclaimers"
+            }
+        };
+
+        // Option card click handlers
+        document.querySelectorAll('.option-card').forEach(card => {
+            card.addEventListener('click', () => {
+                card.classList.toggle('active');
+            });
+        });
+
+        function loadSample(type) {
+            // Update active sample
+            document.querySelectorAll('.sample-input').forEach(input => {
+                input.classList.remove('active');
+            });
+            event.target.closest('.sample-input').classList.add('active');
+
+            const scenario = sampleScenarios[type];
+            document.getElementById('content-input').value = scenario.content;
+            document.getElementById('before-content').textContent = scenario.content;
+            document.getElementById('after-content').textContent = 'Enhanced content will appear here after analysis...';
+            
+            // Hide results if showing
+            document.getElementById('results-section').style.display = 'none';
+        }
+
+        async function enhanceContent() {
+            const content = document.getElementById('content-input').value.trim();
+            if (!content) {
+                alert('Please enter some financial content to enhance or select a sample scenario');
+                return;
+            }
+
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const originalText = analyzeBtn.innerHTML;
+            
+            // Show loading state
+            analyzeBtn.innerHTML = '<div class="loading-spinner"></div>Enhancing Content...';
+            analyzeBtn.disabled = true;
+
+            // Update before content
+            document.getElementById('before-content').textContent = content;
+
+            // Get selected options
+            const factCheck = document.querySelector('[data-option="fact-check"]').classList.contains('active');
+            const context = document.querySelector('[data-option="context"]').classList.contains('active');
+            const compliance = document.querySelector('[data-option="compliance"]').classList.contains('active');
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/enhance`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ai_response: {
+                            content: content,
+                            agent_id: 'frontend_demo',
+                            timestamp: new Date().toISOString()
+                        },
+                        enrichment_level: 'comprehensive',
+                        fact_check: factCheck,
+                        add_context: context
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const endTime = Date.now();
+                result.processing_time_ms = endTime - startTime;
+
+                displayResults(result);
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error enhancing content. Please check the console for details.');
+                document.getElementById('after-content').textContent = 'Error occurred during enhancement. Please try again.';
+            } finally {
+                analyzeBtn.innerHTML = originalText;
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function displayResults(result) {
+            // Update after content
+            document.getElementById('after-content').textContent = result.enhanced_content || result.original_content;
+
+            // Show results section
+            document.getElementById('results-section').style.display = 'block';
+            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+
+            // Update quality score
+            const qualityScore = result.quality_score || 0;
+            const scoreElement = document.getElementById('quality-score');
+            const circleElement = document.getElementById('quality-circle');
+            const descriptionElement = document.getElementById('quality-description');
+
+            scoreElement.textContent = qualityScore.toFixed(2);
+            
+            // Update score circle
+            const angle = qualityScore * 360;
+            circleElement.style.setProperty('--score-angle', `${angle}deg`);
+            
+            // Set circle color and description based on score
+            circleElement.className = 'score-circle';
+            if (qualityScore < 0.6) {
+                circleElement.classList.add('low');
+                descriptionElement.textContent = 'Content needs significant improvement';
+            } else if (qualityScore < 0.8) {
+                circleElement.classList.add('medium');
+                descriptionElement.textContent = 'Good content with minor issues';
+            } else {
+                descriptionElement.textContent = 'Excellent content quality';
+            }
+
+            // Update performance metrics
+            document.getElementById('processing-time').textContent = Math.round(result.processing_time_ms || 0);
+            document.getElementById('fact-checks-count').textContent = (result.fact_checks || []).length;
+            document.getElementById('context-count').textContent = (result.context_additions || []).length;
+            document.getElementById('compliance-count').textContent = (result.compliance_flags || []).length;
+
+            // Display detailed results
+            displayFactChecks(result.fact_checks || []);
+            displayComplianceIssues(result.compliance_flags || []);
+            displayContextAdditions(result.context_additions || []);
+        }
+
+        function displayFactChecks(factChecks) {
+            const container = document.getElementById('fact-checks-results');
+            
+            if (factChecks.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No financial claims detected for verification</p>';
+                return;
+            }
+
+            container.innerHTML = factChecks.map(fc => `
+                <div class="fact-check-item ${fc.verified ? 'verified' : 'unverified'}">
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <i class="fas ${fc.verified ? 'fa-check-circle' : 'fa-exclamation-triangle'}" 
+                           style="color: ${fc.verified ? '#28a745' : '#ffc107'}; margin-right: 8px;"></i>
+                        <strong>${fc.verified ? 'Verified' : 'Unverified'}</strong>
+                    </div>
+                    <p style="margin-bottom: 10px;"><strong>Claim:</strong> ${fc.claim}</p>
+                    <div style="font-size: 0.9rem; color: #666; margin-bottom: 8px;">
+                        <div><strong>Source:</strong> ${fc.source || 'N/A'}</div>
+                        <div><strong>Confidence:</strong> ${(fc.confidence || 0).toFixed(2)}</div>
+                        ${fc.explanation ? `<div><strong>Note:</strong> ${fc.explanation}</div>` : ''}
+                    </div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${(fc.confidence || 0) * 100}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayComplianceIssues(complianceFlags) {
+            const container = document.getElementById('compliance-results');
+            
+            if (complianceFlags.length === 0) {
+                container.innerHTML = '<p style="color: #28a745; text-align: center; padding: 20px;"><i class="fas fa-check"></i> No compliance issues detected</p>';
+                return;
+            }
+
+            container.innerHTML = complianceFlags.map(flag => `
+                <div class="compliance-item">
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <i class="fas fa-exclamation-triangle" style="color: #dc3545; margin-right: 8px;"></i>
+                        <strong>Compliance Issue</strong>
+                    </div>
+                    <p>${flag}</p>
+                </div>
+            `).join('');
+        }
+
+        function displayContextAdditions(contextAdditions) {
+            const container = document.getElementById('context-results');
+            
+            if (contextAdditions.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No additional context added</p>';
+                return;
+            }
+
+            container.innerHTML = contextAdditions.map(context => `
+                <div class="context-item">
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i>
+                        <strong>Market Context</strong>
+                    </div>
+                    <p><strong>Type:</strong> ${context.type || 'General'}</p>
+                    <p>${context.content || context}</p>
+                    ${context.source ? `<div style="font-size: 0.9rem; color: #666; margin-top: 5px;"><strong>Source:</strong> ${context.source}</div>` : ''}
+                    ${context.relevance_score ? `<div style="font-size: 0.9rem; color: #666;"><strong>Relevance:</strong> ${context.relevance_score.toFixed(2)}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Load default sample on page load
+        window.addEventListener('load', () => {
+            loadSample('investment');
+        });
+    </script>
+</body>
+</html>

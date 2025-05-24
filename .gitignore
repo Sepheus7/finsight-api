@@ -1,0 +1,105 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Environment variables
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# AWS
+.aws-sam/
+samconfig.toml
+
+# MacOS
+.DS_Store
+
+# Data and cache files
+data/cache/
+data/results/
+*.log
+*.tmp
+
+# Secrets
+.env.local
+.env.production
+config/secrets.json
+
+# GitHub publication specific
+.github/workflows/
+node_modules/
+package-lock.json
+yarn.lock
+
+# Test results and temporary files
+*_results_*.json
+comprehensive_demo_results_*.json
+serverless_demo_results_*.json
+test_results_*.json
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Backup and temporary files
+*.bak
+*.backup
+*~
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+
+# Project specific
+finai_quality_api.cpython-*.pyc
+cleanup_codebase.py
+final_cleanup_script.py
