@@ -1,27 +1,38 @@
-# AWS SAM Template for Financial AI Quality Enhancement API
+# AWS SAM Template for FinSight - Ollama-Aware Deployment
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Financial AI Quality Enhancement API - Serverless Architecture
+  FinSight AI-Enhanced Financial Fact-Checking API - Serverless Architecture
   
   A serverless API that enhances AI-generated financial advice with real-time 
   fact-checking, context enrichment, compliance detection, and quality scoring.
+  Supports multiple LLM providers with fallback strategies.
 
 Globals:
   Function:
-    Timeout: 30
-    MemorySize: 512
+    Timeout: 60
+    MemorySize: 1024
     Runtime: python3.11
     Environment:
       Variables:
         DYNAMODB_TABLE: !Ref EnhancementHistoryTable
         S3_BUCKET: !Ref DataCacheBucket
+        # LLM Configuration for AWS Lambda (Ollama not supported)
         FINSIGHT_LLM_PROVIDER: !Ref LLMProvider
         OPENAI_API_KEY: !Ref OpenAIApiKey
         ANTHROPIC_API_KEY: !Ref AnthropicApiKey
+        FINSIGHT_OPENAI_MODEL: !Ref OpenAIModel
+        FINSIGHT_ANTHROPIC_MODEL: !Ref AnthropicModel
+        FINSIGHT_TEMPERATURE: "0.1"
+        FINSIGHT_MAX_TOKENS: "1000"
+        # System Configuration
         FINSIGHT_CACHE_ENABLED: "true"
+        FINSIGHT_CACHE_HOURS: "24"
         FINSIGHT_MAX_RETRIES: "3"
         FINSIGHT_REQUEST_TIMEOUT: "30"
+        FINSIGHT_DEBUG: !Ref DebugMode
+        # AWS Configuration
+        FINSIGHT_AWS_REGION: !Ref AWS::Region
 
 Parameters:
   Stage:
@@ -34,19 +45,40 @@ Parameters:
     Type: String
     Default: openai
     AllowedValues: [openai, anthropic, regex]
-    Description: LLM provider for AWS Lambda (Ollama not supported in serverless)
+    Description: >
+      LLM provider for AWS Lambda deployment. 
+      Note: Ollama is not supported in serverless Lambda environment.
   
   OpenAIApiKey:
     Type: String
     Default: ""
     NoEcho: true
-    Description: OpenAI API key (optional)
+    Description: OpenAI API key (required if LLMProvider is openai)
   
   AnthropicApiKey:
     Type: String
     Default: ""
     NoEcho: true
-    Description: Anthropic API key (optional)
+    Description: Anthropic API key (required if LLMProvider is anthropic)
+  
+  OpenAIModel:
+    Type: String
+    Default: gpt-4o-mini
+    Description: OpenAI model to use (gpt-4o-mini recommended for cost efficiency)
+  
+  AnthropicModel:
+    Type: String
+    Default: claude-3-haiku-20240307
+    Description: Anthropic model to use (Claude 3 Haiku recommended for cost efficiency)
+  
+  DebugMode:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: Enable debug logging
+
+Conditions:
+  IsProduction: !Equals [!Ref Stage, prod]
 
 Resources:
   # API Gateway
@@ -63,13 +95,41 @@ Resources:
 
   # Lambda Functions
   
-  # Main Enhancement Function
+  # Enhanced Fact Check Function (Main endpoint with Ollama-aware LLM integration)
+  EnhancedFactCheckFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../src/
+      Handler: handlers.enhanced_fact_check_handler.lambda_handler
+      Description: Enhanced fact-checking with LLM-powered claim extraction
+      Timeout: 120
+      MemorySize: 1536
+      Events:
+        FactCheckApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FinancialAIApi
+            Path: /fact-check
+            Method: post
+      Environment:
+        Variables:
+          USE_LLM: "true"
+          YAHOO_FINANCE_ENABLED: "true"
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref DataCacheBucket
+        - S3WritePolicy:
+            BucketName: !Ref DataCacheBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EnhancementHistoryTable
+
+  # Main Enhancement Function (Orchestrator)
   EnhanceResponseFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: enhance_handler.lambda_handler
-      Description: Main endpoint to enhance AI responses
+      CodeUri: ../../src/
+      Handler: handlers.enhance_handler.lambda_handler
+      Description: Main endpoint to enhance AI responses with fact-checking
       Events:
         EnhanceApi:
           Type: Api
@@ -79,7 +139,7 @@ Resources:
             Method: post
       Environment:
         Variables:
-          FACT_CHECK_FUNCTION: !Ref FactCheckFunction
+          FACT_CHECK_FUNCTION: !Ref EnhancedFactCheckFunction
           CONTEXT_ENRICHMENT_FUNCTION: !Ref ContextEnrichmentFunction
           COMPLIANCE_CHECK_FUNCTION: !Ref ComplianceCheckFunction
       Policies:
@@ -89,32 +149,18 @@ Resources:
               Action:
                 - lambda:InvokeFunction
               Resource:
-                - !GetAtt FactCheckFunction.Arn
+                - !GetAtt EnhancedFactCheckFunction.Arn
                 - !GetAtt ContextEnrichmentFunction.Arn
                 - !GetAtt ComplianceCheckFunction.Arn
         - DynamoDBCrudPolicy:
             TableName: !Ref EnhancementHistoryTable
 
-  # Fact Checking Function
-  FactCheckFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/
-      Handler: fact_check_handler.lambda_handler
-      Description: Verify financial claims and statements
-      Timeout: 60
-      Policies:
-        - S3ReadPolicy:
-            BucketName: !Ref DataCacheBucket
-        - S3WritePolicy:
-            BucketName: !Ref DataCacheBucket
-
   # Context Enrichment Function
   ContextEnrichmentFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: context_enrichment_handler.lambda_handler
+      CodeUri: ../../src/
+      Handler: handlers.context_enrichment_handler.lambda_handler
       Description: Add relevant financial context to responses
       Policies:
         - S3ReadPolicy:
@@ -124,8 +170,8 @@ Resources:
   ComplianceCheckFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: compliance_handler.lambda_handler
+      CodeUri: ../../src/
+      Handler: handlers.compliance_handler.lambda_handler
       Description: Check for regulatory compliance issues
       Environment:
         Variables:
@@ -138,8 +184,8 @@ Resources:
   HealthCheckFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: health_handler.lambda_handler
+      CodeUri: ../../src/
+      Handler: handlers.health_handler.lambda_handler
       Description: API health check endpoint
       Events:
         HealthApi:
@@ -155,8 +201,8 @@ Resources:
   RootFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: root_handler.lambda_handler
+      CodeUri: ../../src/
+      Handler: handlers.root_handler.lambda_handler
       Description: API information endpoint
       Events:
         RootApi:
@@ -187,7 +233,7 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
       PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: true
+        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
 
   ComplianceRulesTable:
     Type: AWS::DynamoDB::Table
@@ -217,53 +263,68 @@ Resources:
         Rules:
           - Id: DeleteOldCacheData
             Status: Enabled
-            ExpirationInDays: 7
+            ExpirationInDays: !If [IsProduction, 30, 7]
 
   # CloudWatch Log Groups
+  EnhancedFactCheckLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${EnhancedFactCheckFunction}'
+      RetentionInDays: !If [IsProduction, 90, 7]
+
   EnhanceResponseLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${EnhanceResponseFunction}'
-      RetentionInDays: 30
+      RetentionInDays: !If [IsProduction, 90, 7]
 
-  FactCheckLogGroup:
-    Type: AWS::Logs::LogGroup
+  # CloudWatch Alarms for Monitoring
+  FactCheckErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsProduction
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${FactCheckFunction}'
-      RetentionInDays: 30
+      AlarmName: !Sub '${AWS::StackName}-FactCheck-Errors'
+      AlarmDescription: 'Monitor fact-check function errors'
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref EnhancedFactCheckFunction
 
-  # IAM Role for API Gateway CloudWatch Logging
-  ApiGatewayCloudWatchLogsRole:
-    Type: AWS::IAM::Role
+  # API Gateway CloudWatch Dashboard
+  ApiDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Condition: IsProduction
     Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - apigateway.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Policies:
-        - PolicyName: ApiGatewayLogsPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:DescribeLogGroups
-                  - logs:DescribeLogStreams
-                  - logs:PutLogEvents
-                  - logs:GetLogEvents
-                  - logs:FilterLogEvents
-                Resource: '*'
+      DashboardName: !Sub '${AWS::StackName}-Dashboard'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  [ "AWS/Lambda", "Invocations", "FunctionName", "${EnhancedFactCheckFunction}" ],
+                  [ ".", "Errors", ".", "." ],
+                  [ ".", "Duration", ".", "." ]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}",
+                "title": "FinSight Lambda Metrics"
+              }
+            }
+          ]
+        }
 
 Outputs:
   FinancialAIApiUrl:
-    Description: "API Gateway endpoint URL for Financial AI Quality API"
+    Description: "API Gateway endpoint URL for FinSight API"
     Value: !Sub "https://${FinancialAIApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
     Export:
       Name: !Sub "${AWS::StackName}-ApiUrl"
@@ -279,3 +340,13 @@ Outputs:
     Value: !Ref DataCacheBucket
     Export:
       Name: !Sub "${AWS::StackName}-CacheBucket"
+  
+  LLMProviderUsed:
+    Description: "LLM provider configured for this deployment"
+    Value: !Ref LLMProvider
+    Export:
+      Name: !Sub "${AWS::StackName}-LLMProvider"
+  
+  DeploymentInfo:
+    Description: "Deployment configuration summary"
+    Value: !Sub "Stage: ${Stage}, LLM: ${LLMProvider}, Debug: ${DebugMode}"

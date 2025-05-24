@@ -1,4 +1,4 @@
-# Financial AI Quality Enhancement API - Architecture
+# FinSight AI-Enhanced Financial Fact-Checking System - Architecture
 
 ## 🏗️ High-Level System Architecture
 
@@ -8,47 +8,130 @@ graph TB
         A[Financial Institution] --> B[AI Agent/Chatbot]
         C[Investment Platform] --> D[Portfolio Assistant]
         E[Banking App] --> F[Customer Service Bot]
+        G[CLI Users] --> H[Command Line Interface]
+        I[Web Users] --> J[Interactive Frontend]
     end
     
-    subgraph "API Gateway"
-        G[Load Balancer] --> H[API Gateway]
-        H --> I[Rate Limiting]
-        H --> J[Authentication]
-        H --> K[Request Validation]
+    subgraph "API Gateway & Load Balancing"
+        K[AWS API Gateway] --> L[Load Balancer]
+        L --> M[Rate Limiting]
+        L --> N[Authentication]
+        L --> O[Request Validation]
     end
     
-    subgraph "Core API Services"
-        L[Financial AI Quality API]
-        L --> M[Fact Checking Engine]
-        L --> N[Context Enrichment Service]
-        L --> O[Compliance Checker]
-        L --> P[Quality Scorer]
+    subgraph "Core Services Layer"
+        P[FinSight API Gateway]
+        P --> Q[Enhanced Fact Checker]
+        P --> R[Ticker Resolution Service]
+        P --> S[Claim Extraction Engine]
+        P --> T[Market Data Validator]
     end
     
-    subgraph "AI/ML Layer"
-        Q[LLM Integration]
-        R[NLP Processing]
-        S[Pattern Recognition]
-        T[Sentiment Analysis]
+    subgraph "LLM Integration Layer"
+        U[LLM Router/Orchestrator]
+        U --> V[Ollama Local LLM]
+        U --> W[OpenAI API]
+        U --> X[Anthropic API]
+        U --> Y[Regex Fallback Engine]
+        
+        V --> V1[llama3.2:3b Model]
+        V --> V2[Alternative Models]
     end
     
-    subgraph "Data Sources"
-        U[Yahoo Finance API]
-        V[Federal Reserve Data]
-        W[SEC Filings]
-        X[Real-time Market Data]
-        Y[Regulatory Databases]
+    subgraph "Enhanced Processing Services"
+        Z[Enhanced Ticker Resolver]
+        AA[Confidence Scoring Engine]
+        BB[Cache Management System]
+        CC[Concurrent Processing Pool]
+        DD[Multi-Strategy Validator]
+    end
+    
+    subgraph "Data Sources & APIs"
+        EE[Yahoo Finance API]
+        FF[Federal Reserve Data]
+        GG[SEC Filings]
+        HH[Real-time Market Data]
+        II[Economic Indicators]
+        JJ[Company Mappings Database]
     end
     
     subgraph "Storage & Caching"
-        Z[Redis Cache]
-        AA[PostgreSQL DB]
-        BB[Audit Logs]
-        CC[Analytics Data]
+        KK[Redis Cache - TTL Based]
+        LL[Local File Cache]
+        MM[AWS S3 - Results Storage]
+        NN[DynamoDB - Audit Logs]
+        OO[Ticker Resolution Cache]
+    end
+    
+    subgraph "Deployment Options"
+        PP[AWS Lambda Serverless]
+        QQ[Docker Containers]
+        RR[Local Development]
+        SS[Cloud Run/App Runner]
     end
     
     subgraph "Monitoring & Analytics"
-        DD[Prometheus Metrics]
+        TT[CloudWatch Metrics]
+        UU[Performance Analytics]
+        VV[Error Tracking]
+        WW[Usage Statistics]
+        XX[Confidence Score Tracking]
+    end
+
+    B --> P
+    D --> P
+    F --> P
+    H --> P
+    J --> P
+    
+    Q --> U
+    S --> U
+    
+    Q --> Z
+    R --> Z
+    T --> EE
+    T --> FF
+    T --> GG
+    T --> HH
+    T --> II
+    
+    Z --> JJ
+    Z --> EE
+    
+    Q --> KK
+    R --> KK
+    S --> LL
+    Z --> OO
+    
+    P --> MM
+    P --> NN
+    
+    P --> TT
+    Q --> UU
+    S --> VV
+    Z --> WW
+    AA --> XX
+```
+
+## 🧠 LLM Integration Strategy
+
+### Primary: Ollama (Local Hosting)
+- **Model**: llama3.2:3b (recommended for speed/accuracy balance)
+- **Deployment**: Local development, Docker containers
+- **Advantages**: No API costs, privacy, offline capability
+- **Use Cases**: Development, on-premise deployments, cost-sensitive scenarios
+
+### Cloud Fallbacks: OpenAI/Anthropic
+- **Models**: GPT-4o-mini, Claude-3-Haiku
+- **Deployment**: AWS Lambda, serverless environments  
+- **Advantages**: Scalability, reliability, no infrastructure management
+- **Use Cases**: Production serverless, high-scale deployments
+
+### Regex Engine (Always Available)
+- **Implementation**: Pattern-based extraction
+- **Deployment**: All environments
+- **Advantages**: Fast, reliable, no dependencies
+- **Use Cases**: Fallback, basic functionality, resource-constrained environments
         EE[Grafana Dashboard]
         FF[Error Tracking]
         GG[Performance Monitor]

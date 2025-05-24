@@ -125,23 +125,53 @@ python run_tests.py
 
 ## 🚀 Deployment Options
 
-### Local Development
+FinSight supports multiple deployment environments with Ollama-aware configurations:
+
+### 🦙 Local Development (Recommended)
 ```bash
+# With Ollama (enhanced mode)
 python finai_quality_api.py
-# Access at http://localhost:8000
+# Access at http://localhost:8000/docs
 ```
 
-### AWS Lambda
+### ☁️ AWS Lambda (Production)
 ```bash
 cd deployment/aws
-./deploy.sh
+# Deploy with OpenAI/Anthropic (Ollama not supported in Lambda)
+./deploy.sh deploy --stage prod --llm-provider openai --openai-key $OPENAI_API_KEY
 ```
 
-### Docker
+### 🐳 Docker (On-Premise)
 ```bash
+# Build and run
 docker build -t finsight .
-docker run -p 8000:8000 finsight
+docker run -p 8000:8000 -e FINSIGHT_LLM_PROVIDER=ollama finsight
 ```
+
+### 📖 Comprehensive Deployment Guides
+
+- **[Complete Deployment Guide](docs/DEPLOYMENT.md)** - All deployment options and configurations
+- **[AWS Deployment (Ollama-Aware)](docs/AWS_DEPLOYMENT_OLLAMA_AWARE.md)** - Detailed AWS Lambda setup with LLM fallbacks
+- **[Local LLM Setup](docs/LOCAL_LLM_SETUP.md)** - Ollama installation and configuration
+
+> **✅ Production Ready**: AWS deployment system is fully tested and validated with automatic Ollama fallback handling.
+
+### 🚀 Quick AWS Deployment
+
+```bash
+cd deployment/aws
+
+# Development deployment with OpenAI
+./deploy.sh deploy --stage dev --llm-provider openai --openai-key $OPENAI_API_KEY
+
+# Production deployment with Anthropic
+./deploy.sh deploy --stage prod --llm-provider anthropic --anthropic-key $ANTHROPIC_API_KEY
+
+# Cost-free deployment (regex only)
+./deploy.sh deploy --stage dev --llm-provider regex
+```
+
+> **Note**: AWS Lambda cannot run Ollama locally. The deployment automatically falls back to OpenAI/Anthropic or regex-based extraction.
 
 ## 📁 Project Structure
 
