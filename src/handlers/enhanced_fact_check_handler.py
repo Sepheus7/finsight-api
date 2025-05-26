@@ -15,11 +15,11 @@ import logging
 # Import our new models and utilities
 try:
     from ..models.financial_models import FinancialClaim, FactCheckResult, ClaimType, RiskLevel
-    from ..utils.llm_claim_extractor import extract_financial_claims, LLMClaimExtractor
+    from ..utils.llm_claim_extractor import LLMClaimExtractor
     from ..utils.enhanced_ticker_resolver import EnhancedTickerResolver
 except ImportError:
     from models.financial_models import FinancialClaim, FactCheckResult, ClaimType, RiskLevel
-    from utils.llm_claim_extractor import extract_financial_claims, LLMClaimExtractor
+    from utils.llm_claim_extractor import LLMClaimExtractor
     from utils.enhanced_ticker_resolver import EnhancedTickerResolver
 
 # Configure logging
@@ -99,10 +99,11 @@ class EnhancedFinancialFactChecker:
         # Initialize enhanced ticker resolver for dynamic company-to-ticker mapping
         self.ticker_resolver = EnhancedTickerResolver()
         
-        # Initialize LLM extractor
+        # Initialize LLM extractor with cost optimization
         if use_llm:
-            llm_provider = os.environ.get('FINSIGHT_LLM_PROVIDER', 'ollama')
-            self.claim_extractor = LLMClaimExtractor(provider=llm_provider)
+            # Use cost-optimized auto-detection (respects global config)
+            self.claim_extractor = LLMClaimExtractor(provider='auto')
+            logger.info(f"Initialized LLM extractor with provider: {self.claim_extractor.provider}")
         else:
             self.claim_extractor = LLMClaimExtractor(provider='regex')
 
@@ -116,11 +117,8 @@ class EnhancedFinancialFactChecker:
                 logger.info("Extracting claims using regex patterns")
                 claims = self.claim_extractor._extract_with_regex(text)
             
-            # Enhance entity resolution
-            enhanced_claims = self.claim_extractor.enhance_entities(claims)
-            
-            logger.info(f"Extracted {len(enhanced_claims)} enhanced financial claims")
-            return enhanced_claims
+            logger.info(f"Extracted {len(claims)} financial claims")
+            return claims
             
         except Exception as e:
             logger.error(f"Claim extraction failed: {str(e)}")
@@ -274,12 +272,17 @@ class EnhancedFinancialFactChecker:
             for value in claim.values:
                 if 'trillion' in value.lower():
                     unit = 'trillion'
-                    claimed_value = float(re.search(r'(\d+(?:\.\d+)?)', value).group(1))
+                    match = re.search(r'(\d+(?:\.\d+)?)', value)
+                    if match:
+                        claimed_value = float(match.group(1))
                 elif 'billion' in value.lower():
                     unit = 'billion'
-                    claimed_value = float(re.search(r'(\d+(?:\.\d+)?)', value).group(1))
-                elif value.replace('.', '').isdigit():
-                    claimed_value = float(value)
+                    match = re.search(r'(\d+(?:\.\d+)?)', value)
+                    if match:
+                        claimed_value = float(match.group(1))
+                elif value.replace('.', '').replace('$', '').isdigit():
+                    claimed_value = float(value.replace('$', ''))
+                    break
                     
             if not claimed_value:
                 # Look in claim text for numbers

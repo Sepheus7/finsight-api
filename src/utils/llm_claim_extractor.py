@@ -7,71 +7,168 @@ import json
 import logging
 import os
 import re
-from typing import List, Dict, Any, Optional
+import urllib.request
+import urllib.error
+from typing import List, Dict, Any, Optional, Union
 from dataclasses import asdict
 
+# Import models - handle both relative and absolute imports
+try:
+    from ..models.financial_models import FinancialClaim, ClaimType
+    from ..utils.enhanced_ticker_resolver import EnhancedTickerResolver
+    from ..config import LLMConfig
+except ImportError:
+    try:
+        from models.financial_models import FinancialClaim, ClaimType
+        from utils.enhanced_ticker_resolver import EnhancedTickerResolver
+        from config import LLMConfig
+    except ImportError:
+        from src.models.financial_models import FinancialClaim, ClaimType
+        from src.utils.enhanced_ticker_resolver import EnhancedTickerResolver
+        from src.config import LLMConfig
+
+# Optional imports with proper fallbacks
 try:
     import openai
     OPENAI_AVAILABLE = True
 except ImportError:
+    openai = None
     OPENAI_AVAILABLE = False
 
 try:
     import anthropic
     ANTHROPIC_AVAILABLE = True
 except ImportError:
+    anthropic = None
     ANTHROPIC_AVAILABLE = False
+
+try:
+    from .bedrock_client import BedrockLLMClient
+    BEDROCK_AVAILABLE = True
+except ImportError:
+    try:
+        from bedrock_client import BedrockLLMClient
+        BEDROCK_AVAILABLE = True
+    except ImportError:
+        BedrockLLMClient = None
+        BEDROCK_AVAILABLE = False
 
 try:
     import requests
     REQUESTS_AVAILABLE = True
 except ImportError:
+    requests = None
     REQUESTS_AVAILABLE = False
 
-# Import models - handle both relative and absolute imports
-try:
-    from ..models.financial_models import FinancialClaim, ClaimType
-    from .enhanced_ticker_resolver import EnhancedTickerResolver
-except ImportError:
-    from models.financial_models import FinancialClaim, ClaimType
-    from utils.enhanced_ticker_resolver import EnhancedTickerResolver
-
 logger = logging.getLogger(__name__)
+
+
+def get_bedrock_client():
+    """Get configured Bedrock client instance with fallback model"""
+    if not BEDROCK_AVAILABLE:
+        raise ImportError("Bedrock client not available")
+    config = LLMConfig()
+    return BedrockLLMClient(
+        region=config.bedrock_region,
+        model_id=config.bedrock_model,
+        fallback_model_id=config.bedrock_fallback_model
+    )
 
 
 class LLMClaimExtractor:
     """LLM-powered financial claim extraction with fallback to regex patterns"""
     
-    def __init__(self, provider: str = "ollama"):
+    def __init__(self, provider: str = "auto"):
         """
         Initialize the LLM claim extractor
         
         Args:
-            provider: "ollama", "openai", "anthropic", or "regex" for fallback
+            provider: LLM provider to use ("auto", "bedrock", "ollama", "openai", "anthropic", "regex")
         """
         self.provider = provider
         self.client = None
+        self.ollama_base_url = None
+        self.ollama_model = None
         
         # Initialize enhanced ticker resolver for dynamic company-to-ticker mapping
         self.ticker_resolver = EnhancedTickerResolver()
         
-        if provider == "ollama" and REQUESTS_AVAILABLE:
+        if provider == "auto":
+            self.provider = self._auto_detect_provider()
+        
+        self._initialize_client()
+
+    def _auto_detect_provider(self) -> str:
+        """Auto-detect best available provider with environment awareness"""
+        # Priority: Local (Ollama) > Cloud (OpenAI/Anthropic) > AWS (Bedrock) > Fallback (Regex)
+        
+        # Check if we're in AWS Lambda - use Bedrock
+        if os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+            if BEDROCK_AVAILABLE:
+                return "bedrock"
+            elif OPENAI_AVAILABLE and os.environ.get('OPENAI_API_KEY'):
+                return "openai"
+            elif ANTHROPIC_AVAILABLE and os.environ.get('ANTHROPIC_API_KEY'):
+                return "anthropic"
+            else:
+                return "regex"
+        
+        # Local development - prefer Ollama
+        else:
+            # Check if Ollama is available locally
+            if REQUESTS_AVAILABLE and self._check_ollama_availability():
+                return "ollama"
+            # Fallback to cloud providers
+            elif OPENAI_AVAILABLE and os.environ.get('OPENAI_API_KEY'):
+                return "openai"
+            elif ANTHROPIC_AVAILABLE and os.environ.get('ANTHROPIC_API_KEY'):
+                return "anthropic"
+            elif BEDROCK_AVAILABLE:
+                return "bedrock"
+            else:
+                return "regex"
+
+    def _check_ollama_availability(self) -> bool:
+        """Check if Ollama is available on localhost"""
+        try:
+            request = urllib.request.Request('http://localhost:11434/api/tags')
+            with urllib.request.urlopen(request, timeout=2) as response:
+                return response.status == 200
+        except Exception:
+            return False
+
+    def _initialize_client(self):
+        """Initialize the appropriate client based on provider"""
+        logger.info(f"Initializing LLM provider: {self.provider}")
+        
+        if self.provider == "bedrock" and BEDROCK_AVAILABLE:
+            try:
+                self.client = get_bedrock_client()
+                logger.info(f"Initialized Bedrock client with model {self.client.model_id}")
+            except Exception as e:
+                logger.warning(f"Could not initialize Bedrock client: {e}, falling back to regex")
+                self.provider = "regex"
+                
+        elif self.provider == "ollama" and REQUESTS_AVAILABLE:
             self.ollama_base_url = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
             self.ollama_model = os.environ.get('OLLAMA_MODEL', 'llama3.2:3b')
             try:
                 # Test Ollama connection
-                response = requests.get(f"{self.ollama_base_url}/api/tags", timeout=5)
-                if response.status_code == 200:
-                    self.client = "ollama"
-                    logger.info(f"Initialized Ollama client with model {self.ollama_model}")
+                if requests:
+                    response = requests.get(f"{self.ollama_base_url}/api/tags", timeout=5)
+                    if response.status_code == 200:
+                        self.client = "ollama"  # Use string identifier for Ollama
+                        logger.info(f"Initialized Ollama client with model {self.ollama_model}")
+                    else:
+                        logger.warning("Ollama server not responding, falling back to regex")
+                        self.provider = "regex"
                 else:
-                    logger.warning("Ollama server not responding, falling back to regex")
-                    self.provider = "regex"
+                    raise ImportError("requests not available")
             except Exception as e:
                 logger.warning(f"Could not connect to Ollama: {e}, falling back to regex")
                 self.provider = "regex"
                 
-        elif provider == "openai" and OPENAI_AVAILABLE:
+        elif self.provider == "openai" and OPENAI_AVAILABLE and openai:
             api_key = os.environ.get('OPENAI_API_KEY')
             if api_key:
                 self.client = openai.OpenAI(api_key=api_key)
@@ -80,7 +177,7 @@ class LLMClaimExtractor:
                 logger.warning("OpenAI API key not found, falling back to regex")
                 self.provider = "regex"
                 
-        elif provider == "anthropic" and ANTHROPIC_AVAILABLE:
+        elif self.provider == "anthropic" and ANTHROPIC_AVAILABLE and anthropic:
             api_key = os.environ.get('ANTHROPIC_API_KEY')
             if api_key:
                 self.client = anthropic.Anthropic(api_key=api_key)
@@ -91,7 +188,7 @@ class LLMClaimExtractor:
         else:
             logger.info("Using regex-based claim extraction")
             self.provider = "regex"
-    
+
     def extract_claims(self, text: str) -> List[FinancialClaim]:
         """
         Extract financial claims from text using LLM or regex fallback
@@ -102,7 +199,7 @@ class LLMClaimExtractor:
         Returns:
             List of FinancialClaim objects
         """
-        if self.provider in ["ollama", "openai", "anthropic"] and self.client:
+        if self.provider in ["bedrock", "ollama", "openai", "anthropic"] and self.client:
             try:
                 return self._extract_with_llm(text)
             except Exception as e:
@@ -110,70 +207,66 @@ class LLMClaimExtractor:
                 return self._extract_with_regex(text)
         else:
             return self._extract_with_regex(text)
-    
+
     def _extract_with_llm(self, text: str) -> List[FinancialClaim]:
-        """Extract claims using LLM (OpenAI or Anthropic)"""
+        """Extract claims using LLM (Bedrock, OpenAI, Anthropic, or Ollama)"""
         system_prompt = """You are a financial claim extraction expert. Analyze the provided text and extract ALL financial claims with high precision.
 
-For each claim found, provide:
-1. The exact claim text
-2. Claim type (stock_price, market_cap, revenue, earnings, interest_rate, inflation, opinion, prediction, historical)
-3. Entities involved (company names, tickers, institutions)
-4. Numerical values mentioned
-5. Confidence score (0.0-1.0)
-6. Character positions in the original text
+RESPONSE FORMAT: Return ONLY valid JSON in this exact structure:
+{
+  "claims": [
+    {
+      "claim_text": "exact text containing the claim",
+      "company": "company name or ticker symbol",
+      "claim_type": "one of: earnings, revenue, growth, merger, acquisition, dividend, guidance, market_share, product_launch, partnership, regulatory, lawsuit, rating_change, price_target, analyst_recommendation, insider_trading, ipo, bankruptcy, restructuring, other",
+      "context": "surrounding context that makes this claim meaningful"
+    }
+  ]
+}
 
-Focus on:
-- Stock prices and valuations
-- Market capitalizations
-- Revenue and earnings figures
-- Interest rates and economic indicators
-- Future predictions and opinions
-- Historical performance statements
+EXTRACTION RULES:
+1. Extract ONLY factual financial claims, NOT opinions or speculation
+2. Each claim must reference a specific company (name or ticker)
+3. Include numerical values, percentages, timeframes when present
+4. Capture both explicit and implicit financial implications
+5. Be precise - extract the exact claim text, not a summary
+6. If no financial claims exist, return empty claims array
 
-Return a JSON array of claims."""
+TEXT TO ANALYZE:"""
 
-        user_prompt = f"""
-Extract financial claims from this text:
-
-"{text}"
-
-Return JSON format:
-[
-  {{
-    "text": "exact claim text",
-    "claim_type": "stock_price|market_cap|revenue|earnings|interest_rate|inflation|opinion|prediction|historical",
-    "entities": ["entity1", "entity2"],
-    "values": ["value1", "value2"],
-    "confidence": 0.95,
-    "start_pos": 0,
-    "end_pos": 50
-  }}
-]
-"""
-
+        user_prompt = f"{text[:4000]}"  # Limit text length
+        
         try:
-            if self.provider == "ollama":
-                # Ollama API call
-                payload = {
-                    "model": self.ollama_model,
-                    "prompt": f"{system_prompt}\n\n{user_prompt}",
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.1,
-                        "num_predict": 2000
-                    }
-                }
-                
-                response = requests.post(
-                    f"{self.ollama_base_url}/api/generate",
-                    json=payload,
-                    timeout=30
+            content = ""
+            
+            if self.provider == "bedrock":
+                content = self.client.generate_text(
+                    user_prompt=user_prompt,
+                    system_prompt=system_prompt,
+                    max_tokens=2000
                 )
-                response.raise_for_status()
-                content = response.json().get("response", "")
                 
-            elif self.provider == "openai":
+            elif self.provider == "ollama":
+                if requests:
+                    payload = {
+                        "model": self.ollama_model,
+                        "prompt": f"{system_prompt}\n\n{user_prompt}",
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.1,
+                            "num_predict": 2000
+                        }
+                    }
+                    
+                    response = requests.post(
+                        f"{self.ollama_base_url}/api/generate",
+                        json=payload,
+                        timeout=30
+                    )
+                    response.raise_for_status()
+                    content = response.json().get("response", "")
+                
+            elif self.provider == "openai" and hasattr(self.client, 'chat'):
                 response = self.client.chat.completions.create(
                     model="gpt-4-turbo",
                     messages=[
@@ -181,13 +274,11 @@ Return JSON format:
                         {"role": "user", "content": user_prompt}
                     ],
                     temperature=0.1,
-                    max_tokens=2000,
-                    response_format={"type": "json_object"} if "json_object" in str(self.client) else None
+                    max_tokens=2000
                 )
-                
                 content = response.choices[0].message.content
                 
-            elif self.provider == "anthropic":
+            elif self.provider == "anthropic" and hasattr(self.client, 'messages'):
                 response = self.client.messages.create(
                     model="claude-3-sonnet-20240229",
                     max_tokens=2000,
@@ -196,7 +287,6 @@ Return JSON format:
                         {"role": "user", "content": f"{system_prompt}\n\n{user_prompt}"}
                     ]
                 )
-                
                 content = response.content[0].text
                 
             return self._parse_llm_response(content, text)
@@ -204,106 +294,157 @@ Return JSON format:
         except Exception as e:
             logger.error(f"LLM API call failed: {e}")
             raise
-    
+
     def _parse_llm_response(self, response_content: str, original_text: str) -> List[FinancialClaim]:
         """Parse LLM JSON response into FinancialClaim objects"""
         try:
-            # Try to extract JSON from response
-            if response_content.startswith('['):
-                claims_data = json.loads(response_content)
-            else:
-                # Look for JSON array in the response
-                json_match = re.search(r'\[.*\]', response_content, re.DOTALL)
-                if json_match:
-                    claims_data = json.loads(json_match.group())
-                else:
-                    logger.warning("No JSON array found in LLM response")
-                    return self._extract_with_regex(original_text)
+            # Extract JSON from response (handle cases where LLM adds extra text)
+            json_start = response_content.find('{')
+            json_end = response_content.rfind('}') + 1
+            
+            if json_start == -1 or json_end == 0:
+                logger.warning("No JSON found in LLM response")
+                return []
+                
+            json_content = response_content[json_start:json_end]
+            parsed_response = json.loads(json_content)
             
             claims = []
-            for claim_data in claims_data:
-                try:
-                    # Map string claim type to enum
-                    claim_type_str = claim_data.get('claim_type', 'opinion')
-                    claim_type = ClaimType(claim_type_str)
-                    
-                    # Create FinancialClaim object
-                    claim = FinancialClaim(
-                        text=claim_data.get('text', ''),
-                        claim_type=claim_type,
-                        entities=claim_data.get('entities', []),
-                        values=claim_data.get('values', []),
-                        confidence=float(claim_data.get('confidence', 0.5)),
-                        source_text=original_text,
-                        start_pos=int(claim_data.get('start_pos', 0)),
-                        end_pos=int(claim_data.get('end_pos', len(original_text)))
-                    )
+            for claim_data in parsed_response.get("claims", []):
+                # Resolve company name to ticker
+                company = claim_data.get("company", "")
+                ticker = self.ticker_resolver.resolve_ticker(company)
+                
+                # Determine claim type - map to available enum values
+                claim_type_str = claim_data.get("claim_type", "opinion").lower()
+                claim_type_mapping = {
+                    "earnings": ClaimType.EARNINGS,
+                    "revenue": ClaimType.REVENUE,
+                    "growth": ClaimType.REVENUE,  # Map growth to revenue
+                    "stock_price": ClaimType.STOCK_PRICE,
+                    "market_cap": ClaimType.MARKET_CAP,
+                    "dividend": ClaimType.EARNINGS,  # Map dividend to earnings
+                    "merger": ClaimType.PREDICTION,  # Map merger to prediction
+                    "acquisition": ClaimType.PREDICTION,  # Map acquisition to prediction
+                    "guidance": ClaimType.PREDICTION,
+                    "market_share": ClaimType.ECONOMIC_INDICATOR,
+                    "product_launch": ClaimType.PREDICTION,
+                    "partnership": ClaimType.PREDICTION,
+                    "regulatory": ClaimType.ECONOMIC_INDICATOR,
+                    "lawsuit": ClaimType.PREDICTION,
+                    "rating_change": ClaimType.OPINION,
+                    "price_target": ClaimType.PREDICTION,
+                    "analyst_recommendation": ClaimType.OPINION,
+                    "insider_trading": ClaimType.HISTORICAL,
+                    "ipo": ClaimType.PREDICTION,
+                    "bankruptcy": ClaimType.PREDICTION,
+                    "restructuring": ClaimType.PREDICTION,
+                    "interest_rate": ClaimType.INTEREST_RATE,
+                    "inflation": ClaimType.INFLATION
+                }
+                
+                claim_type = claim_type_mapping.get(claim_type_str, ClaimType.OPINION)
+                
+                # Extract entities and values
+                entities = [company]
+                if ticker and ticker != company:
+                    entities.append(ticker)
+                
+                # Try to extract numerical values from the claim text
+                values = []
+                import re
+                value_patterns = [
+                    r'\$[\d,]+(?:\.\d+)?(?:\s*(?:million|billion|trillion))?',
+                    r'\d+(?:\.\d+)?%',
+                    r'\d+(?:\.\d+)?(?:\s*(?:million|billion|trillion))?'
+                ]
+                for pattern in value_patterns:
+                    matches = re.findall(pattern, claim_data.get("claim_text", ""), re.IGNORECASE)
+                    values.extend(matches)
+                
+                # Create claim object with correct structure
+                claim = FinancialClaim(
+                    text=claim_data.get("claim_text", ""),
+                    claim_type=claim_type,
+                    entities=entities,
+                    values=values,
+                    confidence=0.9,  # High confidence for LLM extraction
+                    source_text=original_text
+                )
+                
+                if claim.text and claim.entities:
                     claims.append(claim)
-                    
-                except (ValueError, KeyError) as e:
-                    logger.warning(f"Skipping malformed claim: {e}")
-                    continue
             
-            logger.info(f"Extracted {len(claims)} claims using LLM")
+            logger.info(f"Extracted {len(claims)} claims using {self.provider}")
             return claims
             
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse LLM JSON response: {e}")
-            return self._extract_with_regex(original_text)
-    
+            logger.debug(f"Response content: {response_content}")
+            return []
+        except Exception as e:
+            logger.error(f"Error parsing LLM response: {e}")
+            return []
+
     def _extract_with_regex(self, text: str) -> List[FinancialClaim]:
-        """Fallback extraction using improved regex patterns"""
+        """Fallback regex-based extraction for when LLM is not available"""
         claims = []
         
-        # Stock price patterns
-        stock_patterns = [
-            (r'(?i)(apple inc\.|microsoft|google|tesla|amazon|meta)\s*\(([A-Z]{2,5})\)\s+stock\s+price\s+is\s+\$(\d+(?:\.\d{1,2})?)', ClaimType.STOCK_PRICE),
-            (r'(?i)\b([A-Z]{2,5})\s+(?:is\s+)?(?:currently\s+)?(?:trading|trades)\s+(?:at\s+)?\$(\d+(?:\.\d{1,2})?)', ClaimType.STOCK_PRICE),
-            (r'(?i)\b([A-Z]{2,5})\s+(?:stock|shares?)\s+(?:is|are|at)\s+\$(\d+(?:\.\d{1,2})?)', ClaimType.STOCK_PRICE),
+        # Define regex patterns for common financial claims - mapped to available ClaimType values
+        patterns = [
+            # Earnings patterns
+            (r'(\w+)\s+(?:reported|posted|announced)\s+(?:earnings|profit|income)\s+of\s+\$?([\d.,]+\s*(?:million|billion)?)', ClaimType.EARNINGS),
+            (r'(\w+)(?:\'s)?\s+(?:Q\d+|quarterly|annual)\s+earnings\s+(?:were|was|of)\s+\$?([\d.,]+\s*(?:million|billion)?)', ClaimType.EARNINGS),
+            
+            # Revenue patterns
+            (r'(\w+)\s+(?:reported|generated|posted)\s+(?:revenue|sales)\s+of\s+\$?([\d.,]+\s*(?:million|billion)?)', ClaimType.REVENUE),
+            (r'(\w+)(?:\'s)?\s+revenue\s+(?:increased|decreased|rose|fell)\s+(?:by\s+)?(\d+(?:\.\d+)?%)', ClaimType.REVENUE),
+            
+            # Growth patterns (mapped to REVENUE)
+            (r'(\w+)\s+(?:grew|increased|expanded)\s+(?:by\s+)?(\d+(?:\.\d+)?%)', ClaimType.REVENUE),
+            (r'(\w+)(?:\'s)?\s+(?:growth|expansion)\s+of\s+(\d+(?:\.\d+)?%)', ClaimType.REVENUE),
+            
+            # Stock price patterns
+            (r'(\w+)\s+(?:stock|shares|price)\s+(?:rose|fell|increased|decreased)\s+(?:by\s+)?(\d+(?:\.\d+)?%)', ClaimType.STOCK_PRICE),
+            
+            # Market cap patterns
+            (r'(\w+)(?:\'s)?\s+market\s+cap\s+(?:is|was|reached)\s+\$?([\d.,]+\s*(?:million|billion|trillion)?)', ClaimType.MARKET_CAP),
+            
+            # Dividend patterns (mapped to EARNINGS)
+            (r'(\w+)\s+(?:declared|announced|paid)\s+(?:a\s+)?dividend\s+of\s+\$?([\d.]+)', ClaimType.EARNINGS),
+            
+            # Merger/Acquisition patterns (mapped to PREDICTION)
+            (r'(\w+)\s+(?:acquired|purchased|bought)\s+(\w+)', ClaimType.PREDICTION),
+            (r'(\w+)\s+(?:to\s+)?(?:merge|combine)\s+with\s+(\w+)', ClaimType.PREDICTION),
         ]
         
-        # Market cap patterns - made more flexible
-        market_cap_patterns = [
-            (r'(?i)(microsoft|apple|google|tesla|amazon|meta|alphabet)\s+(?:has\s+a\s+)?market\s+cap(?:italization)?\s+(?:of\s+|is\s+)?\$?(\d+(?:\.\d+)?)\s*(trillion|billion|million)', ClaimType.MARKET_CAP),
-            (r'(?i)market\s+cap(?:italization)?\s+of\s+(microsoft|apple|google|tesla|amazon|meta|alphabet)\s+is\s+\$?(\d+(?:\.\d+)?)\s*(trillion|billion|million)', ClaimType.MARKET_CAP),
-            (r"(?i)(microsoft|apple|google|tesla|amazon|meta|alphabet)(?:'s)?\s+market\s+cap(?:italization)?\s+(?:is|reached|hit)\s+\$?(\d+(?:\.\d+)?)\s*(trillion|billion|million)", ClaimType.MARKET_CAP),
-        ]
-        
-        # Revenue patterns
-        revenue_patterns = [
-            (r"(?i)(tesla|apple|microsoft|google|amazon|meta|alphabet)'s\s+revenue\s+(?:increased|grew|rose)\s+by\s+(\d+(?:\.\d+)?%)", ClaimType.REVENUE),
-            (r'(?i)(apple|microsoft|google|tesla|amazon|meta|alphabet)\s+reported\s+\$(\d+(?:\.\d+)?)\s*(billion|million|trillion)\s+in\s+revenue', ClaimType.REVENUE),
-            (r'(?i)revenue\s+(?:increased|grew|rose)\s+by\s+(\d+(?:\.\d+)?%)', ClaimType.REVENUE),
-        ]
-        
-        # Interest rate patterns
-        rate_patterns = [
-            (r'(?i)(?:federal reserve|fed)\s+will\s+(?:raise|cut|set)\s+interest\s+rates?\s+(?:by\s+)?(\d+(?:\.\d+)?%)', ClaimType.INTEREST_RATE),
-            (r'(?i)interest\s+rates?\s+(?:are|at)\s+(\d+(?:\.\d+)?%)', ClaimType.INTEREST_RATE),
-        ]
-        
-        all_patterns = stock_patterns + market_cap_patterns + revenue_patterns + rate_patterns
-        
-        for pattern, claim_type in all_patterns:
-            matches = re.finditer(pattern, text)
+        for pattern, claim_type in patterns:
+            matches = re.finditer(pattern, text, re.IGNORECASE)
             for match in matches:
-                entities = []
-                values = []
+                company = match.group(1)
+                ticker = self.ticker_resolver.resolve_ticker(company)
                 
-                # Extract entities and values from match groups
-                groups = match.groups()
-                for group in groups:
-                    if group and group.replace('.', '').replace('%', '').isdigit():
-                        values.append(group)
-                    elif group and group.isalpha() and len(group) > 1:
-                        entities.append(group)
+                # Extract entities and values
+                entities = [company]
+                if ticker and ticker != company:
+                    entities.append(ticker)
+                
+                # Extract values from the match
+                values = []
+                for i in range(2, len(match.groups()) + 1):
+                    try:
+                        value = match.group(i)
+                        if value:
+                            values.append(value)
+                    except IndexError:
+                        break
                 
                 claim = FinancialClaim(
                     text=match.group(0),
                     claim_type=claim_type,
                     entities=entities,
                     values=values,
-                    confidence=0.8,  # High confidence for regex matches
+                    confidence=0.6,  # Lower confidence for regex extraction
                     source_text=text,
                     start_pos=match.start(),
                     end_pos=match.end()
@@ -312,36 +453,28 @@ Return JSON format:
         
         logger.info(f"Extracted {len(claims)} claims using regex patterns")
         return claims
-    
-    def enhance_entities(self, claims: List[FinancialClaim]) -> List[FinancialClaim]:
-        """Enhance entity recognition by mapping company names to tickers"""
-        for claim in claims:
-            enhanced_entities = []
-            for entity in claim.entities:
-                # Use enhanced ticker resolver for dynamic company-to-ticker mapping
-                ticker_match = self.ticker_resolver.resolve_ticker(entity)
-                if ticker_match and ticker_match.confidence > 0.7:
-                    enhanced_entities.extend([entity, ticker_match.ticker])
-                    logger.debug(f"Enhanced entity '{entity}' with ticker '{ticker_match.ticker}' (confidence: {ticker_match.confidence:.2f})")
-                else:
-                    enhanced_entities.append(entity)
-            claim.entities = list(set(enhanced_entities))  # Remove duplicates
-        
-        return claims
 
+    def _extract_context(self, text: str, start: int, end: int, context_window: int = 100) -> str:
+        """Extract surrounding context for a claim"""
+        context_start = max(0, start - context_window)
+        context_end = min(len(text), end + context_window)
+        return text[context_start:context_end].strip()
 
-# Convenience function for easy usage
-def extract_financial_claims(text: str, provider: str = "openai") -> List[FinancialClaim]:
-    """
-    Extract financial claims from text using the specified provider
-    
-    Args:
-        text: Input text to analyze
-        provider: "openai", "anthropic", or "regex"
-        
-    Returns:
-        List of FinancialClaim objects
-    """
-    extractor = LLMClaimExtractor(provider=provider)
-    claims = extractor.extract_claims(text)
-    return extractor.enhance_entities(claims)
+    def get_provider_info(self) -> Dict[str, Any]:
+        """Get information about the current provider and its capabilities"""
+        return {
+            "provider": self.provider,
+            "client_type": type(self.client).__name__ if self.client else None,
+            "capabilities": {
+                "llm_extraction": self.provider != "regex",
+                "high_confidence": self.provider in ["bedrock", "openai", "anthropic"],
+                "cost_optimized": self.provider in ["ollama", "regex"],
+                "offline_capable": self.provider in ["ollama", "regex"]
+            },
+            "model_info": {
+                "bedrock": getattr(self.client, 'model_id', None) if self.provider == "bedrock" else None,
+                "ollama": self.ollama_model if self.provider == "ollama" else None,
+                "openai": "gpt-4-turbo" if self.provider == "openai" else None,
+                "anthropic": "claude-3-sonnet-20240229" if self.provider == "anthropic" else None
+            }
+        }

@@ -11,6 +11,7 @@ FinSight is a sophisticated AI-powered system for automatically extracting and f
 ## 🌟 Key Features
 
 - 🦙 **Ollama Integration** - Local LLM hosting (no API keys required)
+- 💰 **Cost Optimization** - Automatic provider selection and fallback to cheaper models
 - 🎯 **Enhanced Ticker Resolution** - Dynamic company-to-ticker mapping with 95%+ accuracy  
 - 🔍 **Multi-Strategy Fact Checking** - Pattern matching + LLM validation
 - ⚡ **High Performance** - Concurrent processing with intelligent caching
@@ -41,13 +42,26 @@ ollama serve
 
 ### 3. Basic Usage
 
-**With Ollama (Enhanced Mode):**
+**Core Application:**
 ```bash
 # Configure environment
 cp .env.template .env
 
 # Single claim verification
 python src/main.py -t "Microsoft's market cap is $3 trillion"
+
+# Interactive mode
+python src/main.py --interactive
+```
+
+**Demo Environment:**
+```bash
+# PM Demo (Professional presentation)
+python demo/scripts/pm_demo.py
+
+# Interactive demo with web interface
+cd demo && ./start_demo.sh
+```
 
 # Interactive mode
 python src/main.py --interactive
@@ -83,6 +97,13 @@ python src/main.py -t "Microsoft's market cap is $3 trillion" --no-llm
 - **Fallback: OpenAI/Anthropic** - Cloud APIs as backup
 - **Regex Engine** - Pattern-based extraction without LLM dependencies
 
+### 💰 Cost Optimization
+- **Environment Detection** - Automatically selects optimal provider based on context
+- **Local Development** - Free Ollama inference (no API costs)
+- **AWS Bedrock Fallback** - 67% cost reduction with automatic fallback to cheaper models
+- **Cost Monitoring** - Built-in cost estimation for different model tiers
+- **Smart Provider Selection** - Ollama → Cloud APIs → Bedrock → Regex fallback
+
 ## 🔧 Configuration
 
 Copy `.env.template` to `.env` and configure:
@@ -93,6 +114,11 @@ FINSIGHT_LLM_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3.2:3b
 
+# AWS Bedrock (with cost optimization)
+FINSIGHT_BEDROCK_MODEL=anthropic.claude-3-haiku-20240307-v1:0
+FINSIGHT_BEDROCK_FALLBACK_MODEL=amazon.titan-text-express-v1
+FINSIGHT_BEDROCK_REGION=us-east-1
+
 # Optional: Cloud LLM fallbacks
 OPENAI_API_KEY=your_openai_api_key_here
 ANTHROPIC_API_KEY=your_anthropic_key_here
@@ -102,6 +128,8 @@ FINSIGHT_DEBUG=false
 FINSIGHT_CACHE_ENABLED=true
 FINSIGHT_CACHE_HOURS=24
 ```
+
+📖 **For detailed cost optimization configuration, see**: [Cost Optimization Guide](docs/COST_OPTIMIZATION_GUIDE.md)
 
 ## 🧪 Testing & Validation
 

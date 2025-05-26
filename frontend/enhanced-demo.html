@@ -270,29 +270,59 @@
             color: #666;
         }
 
-        .analyze-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 30px;
+        .provider-status {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .analyze-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        .provider-status h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .analyze-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+        .provider-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .provider-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .provider-item i {
+            color: #007bff;
+            width: 20px;
+        }
+
+        .provider-note {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #004085;
+        }
+
+        .provider-note i {
+            color: #007bff;
         }
 
         .loading-spinner {
@@ -613,6 +643,29 @@
                     </div>
                 </div>
 
+                <!-- Provider Status -->
+                <div class="provider-status" id="provider-status">
+                    <h3><i class="fas fa-cogs"></i> AI Provider Status</h3>
+                    <div class="provider-info">
+                        <div class="provider-item">
+                            <i class="fas fa-server"></i>
+                            <span>Backend: <strong id="backend-type">Local Development</strong></span>
+                        </div>
+                        <div class="provider-item">
+                            <i class="fas fa-brain"></i>
+                            <span>LLM Status: <strong id="llm-status">Checking...</strong></span>
+                        </div>
+                        <div class="provider-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Fallback: <strong id="fallback-method">Regex Patterns</strong></span>
+                        </div>
+                    </div>
+                    <div class="provider-note">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="provider-note">Using local development server. For full LLM capabilities, see AWS deployment.</span>
+                    </div>
+                </div>
+
                 <!-- Analyze Button -->
                 <button id="analyze-btn" class="analyze-btn" onclick="enhanceContent()">
                     <i class="fas fa-magic"></i> Enhance Content with FinSight
@@ -696,7 +749,8 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'https://6akbbnz5hf.execute-api.us-east-1.amazonaws.com/dev';
+        // Use local API for demo, fallback to AWS if needed
+        const API_BASE_URL = 'http://localhost:8000';
 
         const sampleScenarios = {
             investment: {
@@ -850,6 +904,27 @@ Diversification across different asset classes remains important for portfolio m
             document.getElementById('context-count').textContent = (result.context_additions || []).length;
             document.getElementById('compliance-count').textContent = (result.compliance_flags || []).length;
 
+            // Update provider status after processing
+            if (result.provider_used) {
+                const providerNote = document.getElementById('provider-note');
+                if (result.provider_used === 'bedrock_llm') {
+                    providerNote.innerHTML = '<i class="fas fa-cloud"></i> <span>Processed using AWS Bedrock LLM (Claude 3 Haiku)</span>';
+                    providerNote.style.background = '#d1ecf1';
+                    providerNote.style.borderColor = '#bee5eb';
+                    providerNote.style.color = '#0c5460';
+                } else if (result.provider_used === 'ollama_llm') {
+                    providerNote.innerHTML = '<i class="fas fa-desktop"></i> <span>Processed using local Ollama LLM</span>';
+                    providerNote.style.background = '#d4edda';
+                    providerNote.style.borderColor = '#c3e6cb';
+                    providerNote.style.color = '#155724';
+                } else if (result.provider_used === 'regex_fallback') {
+                    providerNote.innerHTML = '<i class="fas fa-code"></i> <span>Processed using regex fallback patterns</span>';
+                    providerNote.style.background = '#fff3cd';
+                    providerNote.style.borderColor = '#ffeaa7';
+                    providerNote.style.color = '#856404';
+                }
+            }
+
             // Display detailed results
             displayFactChecks(result.fact_checks || []);
             displayComplianceIssues(result.compliance_flags || []);
@@ -928,7 +1003,40 @@ Diversification across different asset classes remains important for portfolio m
         // Load default sample on page load
         window.addEventListener('load', () => {
             loadSample('investment');
+            updateProviderStatus();
         });
+
+        // Update provider status
+        async function updateProviderStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    const health = await response.json();
+                    
+                    // Update status displays
+                    document.getElementById('llm-status').textContent = 
+                        health.llm_status === 'available' ? 'Available' : 'Unavailable';
+                    document.getElementById('fallback-method').textContent = 
+                        health.fallback || 'Regex Patterns';
+                    
+                    // Update provider note based on LLM availability
+                    const providerNote = document.getElementById('provider-note');
+                    if (health.llm_status === 'available') {
+                        providerNote.innerHTML = '<i class="fas fa-check-circle"></i> <span>LLM integration active. Advanced claim extraction enabled.</span>';
+                        providerNote.style.background = '#d4edda';
+                        providerNote.style.borderColor = '#c3e6cb';
+                        providerNote.style.color = '#155724';
+                    } else {
+                        providerNote.innerHTML = '<i class="fas fa-info-circle"></i> <span>Using local development server. For full LLM capabilities, see AWS deployment.</span>';
+                    }
+                } else {
+                    document.getElementById('llm-status').textContent = 'Connection Error';
+                }
+            } catch (error) {
+                console.error('Failed to fetch provider status:', error);
+                document.getElementById('llm-status').textContent = 'Connection Error';
+            }
+        }
     </script>
 </body>
 </html>
