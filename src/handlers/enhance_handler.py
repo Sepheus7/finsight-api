@@ -234,24 +234,51 @@ def generate_enhanced_content(content: str, fact_checks: List[Dict],
 
 def calculate_quality_score(fact_checks: List[Dict], context_additions: List[Dict], 
                           compliance_flags: List[str]) -> float:
-    """Calculate quality score based on enhancements"""
-    base_score = 0.7
-
-    # Fact check impact
+    """
+    Calculate enhanced quality score based on multiple factors
+    Returns score between 0.0 and 1.0 (displayed as percentage)
+    """
+    # Start with a higher base score for realistic content
+    base_score = 0.85
+    
+    # Fact check scoring - more nuanced approach
+    fact_check_score = 0.0
     if fact_checks:
-        verified_ratio = sum(1 for fc in fact_checks if fc.get('verified', False)) / len(fact_checks)
-        fact_check_score = 0.3 * verified_ratio
-    else:
-        fact_check_score = 0.0
-
-    # Context enrichment impact
-    context_score = min(0.2, len(context_additions) * 0.05)
-
-    # Compliance penalty
-    compliance_penalty = len(compliance_flags) * 0.1
-
-    final_score = base_score + fact_check_score + context_score - compliance_penalty
-    return max(0.0, min(1.0, final_score))
+        verified_count = sum(1 for fc in fact_checks if fc.get('verified', False))
+        total_confidence = sum(fc.get('confidence', 0.5) for fc in fact_checks)
+        avg_confidence = total_confidence / len(fact_checks) if fact_checks else 0.5
+        
+        # Combine verification ratio with average confidence
+        verified_ratio = verified_count / len(fact_checks)
+        fact_check_score = 0.15 * (verified_ratio * 0.7 + avg_confidence * 0.3)
+    
+    # Context enrichment bonus - rewards comprehensive analysis
+    context_bonus = min(0.1, len(context_additions) * 0.02)
+    
+    # Compliance scoring - more graduated penalties
+    compliance_score = 0.0
+    if compliance_flags:
+        # Less severe penalties for minor issues
+        high_severity = sum(1 for flag in compliance_flags if 'high' in flag.lower() or 'severe' in flag.lower())
+        medium_severity = sum(1 for flag in compliance_flags if 'medium' in flag.lower())
+        low_severity = len(compliance_flags) - high_severity - medium_severity
+        
+        compliance_penalty = (high_severity * 0.15) + (medium_severity * 0.08) + (low_severity * 0.03)
+        compliance_score = -min(0.3, compliance_penalty)  # Cap maximum penalty
+    
+    # Content length bonus (if we have content)
+    content_bonus = 0.02  # Small bonus for having content to analyze
+    
+    # Calculate final score
+    final_score = base_score + fact_check_score + context_bonus + compliance_score + content_bonus
+    
+    # Ensure realistic range - most content should score 60-95%
+    final_score = max(0.4, min(1.0, final_score))
+    
+    logger.info(f"Quality score breakdown - Base: {base_score:.2f}, Facts: {fact_check_score:.2f}, "
+               f"Context: {context_bonus:.2f}, Compliance: {compliance_score:.2f}, Final: {final_score:.2f}")
+    
+    return round(final_score, 3)
 
 
 def store_enhancement_history(record: Dict[str, Any]) -> None:

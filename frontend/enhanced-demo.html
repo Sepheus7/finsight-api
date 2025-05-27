@@ -515,6 +515,32 @@
             opacity: 0.8;
         }
 
+        .analyze-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         @media (max-width: 768px) {
             .hero-section h1 {
                 font-size: 2.5rem;
@@ -851,6 +877,112 @@ Diversification across different asset classes remains important for portfolio m
                 }
 
                 const result = await response.json();
+                const processingTime = Date.now() - startTime;
+
+                // Update the UI with results
+                displayResults(result, processingTime);
+
+            } catch (error) {
+                console.error('Error enhancing content:', error);
+                document.getElementById('after-content').innerHTML = 
+                    `<div style="color: #dc3545; padding: 20px; text-align: center;">
+                        <i class="fas fa-exclamation-triangle"></i><br>
+                        <strong>Connection Error</strong><br>
+                        Unable to connect to the FinSight API. Please make sure the server is running.
+                        <br><br>
+                        <small>Error: ${error.message}</small>
+                    </div>`;
+            } finally {
+                // Reset button
+                analyzeBtn.innerHTML = originalText;
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function displayResults(result, processingTime) {
+            // Update enhanced content
+            document.getElementById('after-content').textContent = result.enhanced_content;
+
+            // Show results section
+            document.getElementById('results-section').style.display = 'block';
+
+            // Update quality score - convert to percentage for display
+            const qualityScore = Math.round((result.quality_score || 0.75) * 100);
+            const scoreCircle = document.getElementById('quality-circle');
+            const scoreAngle = (qualityScore / 100) * 360;
+            
+            scoreCircle.style.setProperty('--score-angle', `${scoreAngle}deg`);
+            scoreCircle.innerHTML = `<div class="score-value">${qualityScore}%</div>`;
+            
+            // Set quality color and description
+            if (qualityScore < 60) {
+                scoreCircle.className = 'score-circle low';
+                document.getElementById('quality-description').textContent = 'Content needs significant improvement';
+            } else if (qualityScore < 80) {
+                scoreCircle.className = 'score-circle medium';
+                document.getElementById('quality-description').textContent = 'Good content with minor issues';
+            } else {
+                scoreCircle.className = 'score-circle';
+                document.getElementById('quality-description').textContent = 'Excellent content quality';
+            }
+
+            // Update metrics
+            const metricsContainer = document.querySelector('.performance-metrics');
+            metricsContainer.innerHTML = `
+                <div class="metric">
+                    <div class="metric-value">${qualityScore}</div>
+                    <div class="metric-label">Quality Score</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${result.fact_checks?.length || 0}</div>
+                    <div class="metric-label">Facts Checked</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${result.compliance_flags?.length || 0}</div>
+                    <div class="metric-label">Compliance Issues</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${Math.round(processingTime/1000)}s</div>
+                    <div class="metric-label">Processing Time</div>
+                </div>
+            `;
+
+            // Update results grid
+            const resultsGrid = document.querySelector('.results-grid');
+            resultsGrid.innerHTML = `
+                <div class="result-card">
+                    <h3><i class="fas fa-search"></i> Fact Checks</h3>
+                    ${(result.fact_checks || []).map(fact => `
+                        <div class="fact-check-item ${fact.verified ? 'verified' : 'unverified'}">
+                            <strong>${fact.claim}</strong><br>
+                            <small>Confidence: ${Math.round(fact.confidence * 100)}% | ${fact.explanation}</small>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${fact.confidence * 100}%"></div>
+                            </div>
+                        </div>
+                    `).join('') || '<p>No fact checks performed</p>'}
+                </div>
+                <div class="result-card ${result.compliance_flags?.length ? 'warning' : ''}">
+                    <h3><i class="fas fa-gavel"></i> Compliance Analysis</h3>
+                    ${(result.compliance_flags || []).map(flag => `
+                        <div class="compliance-item">
+                            <strong><i class="fas fa-exclamation-triangle"></i> ${flag}</strong>
+                        </div>
+                    `).join('') || '<p><i class="fas fa-check-circle"></i> No compliance issues detected</p>'}
+                </div>
+                <div class="result-card">
+                    <h3><i class="fas fa-plus-circle"></i> Context Added</h3>
+                    ${(result.context_additions || []).map(context => `
+                        <div class="context-item">
+                            <strong>${context.type}</strong><br>
+                            <small>${context.content}</small>
+                        </div>
+                    `).join('') || '<p>No additional context added</p>'}
+                </div>
+            `;
+        }
+
+                const result = await response.json();
                 const endTime = Date.now();
                 result.processing_time_ms = endTime - startTime;
 
@@ -874,24 +1006,25 @@ Diversification across different asset classes remains important for portfolio m
             document.getElementById('results-section').style.display = 'block';
             document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
 
-            // Update quality score
-            const qualityScore = result.quality_score || 0;
+            // Update quality score - convert to percentage for display
+            const qualityScoreRaw = result.quality_score || 0.75;
+            const qualityScore = Math.round(qualityScoreRaw * 100);
             const scoreElement = document.getElementById('quality-score');
             const circleElement = document.getElementById('quality-circle');
             const descriptionElement = document.getElementById('quality-description');
 
-            scoreElement.textContent = qualityScore.toFixed(2);
+            scoreElement.textContent = `${qualityScore}%`;
             
-            // Update score circle
-            const angle = qualityScore * 360;
+            // Update score circle - use percentage for angle calculation
+            const angle = (qualityScore / 100) * 360;
             circleElement.style.setProperty('--score-angle', `${angle}deg`);
             
             // Set circle color and description based on score
             circleElement.className = 'score-circle';
-            if (qualityScore < 0.6) {
+            if (qualityScore < 60) {
                 circleElement.classList.add('low');
                 descriptionElement.textContent = 'Content needs significant improvement';
-            } else if (qualityScore < 0.8) {
+            } else if (qualityScore < 80) {
                 circleElement.classList.add('medium');
                 descriptionElement.textContent = 'Good content with minor issues';
             } else {
@@ -955,47 +1088,6 @@ Diversification across different asset classes remains important for portfolio m
                     <div class="confidence-bar">
                         <div class="confidence-fill" style="width: ${(fc.confidence || 0) * 100}%"></div>
                     </div>
-                </div>
-            `).join('');
-        }
-
-        function displayComplianceIssues(complianceFlags) {
-            const container = document.getElementById('compliance-results');
-            
-            if (complianceFlags.length === 0) {
-                container.innerHTML = '<p style="color: #28a745; text-align: center; padding: 20px;"><i class="fas fa-check"></i> No compliance issues detected</p>';
-                return;
-            }
-
-            container.innerHTML = complianceFlags.map(flag => `
-                <div class="compliance-item">
-                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                        <i class="fas fa-exclamation-triangle" style="color: #dc3545; margin-right: 8px;"></i>
-                        <strong>Compliance Issue</strong>
-                    </div>
-                    <p>${flag}</p>
-                </div>
-            `).join('');
-        }
-
-        function displayContextAdditions(contextAdditions) {
-            const container = document.getElementById('context-results');
-            
-            if (contextAdditions.length === 0) {
-                container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No additional context added</p>';
-                return;
-            }
-
-            container.innerHTML = contextAdditions.map(context => `
-                <div class="context-item">
-                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                        <i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i>
-                        <strong>Market Context</strong>
-                    </div>
-                    <p><strong>Type:</strong> ${context.type || 'General'}</p>
-                    <p>${context.content || context}</p>
-                    ${context.source ? `<div style="font-size: 0.9rem; color: #666; margin-top: 5px;"><strong>Source:</strong> ${context.source}</div>` : ''}
-                    ${context.relevance_score ? `<div style="font-size: 0.9rem; color: #666;"><strong>Relevance:</strong> ${context.relevance_score.toFixed(2)}</div>` : ''}
                 </div>
             `).join('');
         }
