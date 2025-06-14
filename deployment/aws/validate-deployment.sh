@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # AWS Deployment Validation Test
-# This script validates that the Ollama-aware AWS deployment is working correctly
+# This script validates that the Bedrock AWS deployment is working correctly
 
 set -e
 
@@ -51,7 +51,7 @@ fi
 
 # Test 3: Template linting
 print_test "Testing CloudFormation template linting..."
-if sam validate --template template-ollama-aware.yaml --lint > /dev/null 2>&1; then
+if sam validate --template template-bedrock.yaml --lint > /dev/null 2>&1; then
     print_status "Template linting passed"
 else
     print_error "Template linting failed"
@@ -61,7 +61,7 @@ fi
 # Test 4: Check required files exist
 print_test "Checking required files exist..."
 required_files=(
-    "template-ollama-aware.yaml"
+    "template-bedrock.yaml"
     "../../src/handlers/enhanced_fact_check_handler.py"
     "../../src/utils/llm_claim_extractor.py"
     "../../src/config.py"
@@ -158,5 +158,5 @@ echo "  ./deploy.sh outputs --stage prod"
 
 echo ""
 print_status "All validation tests passed! ✨"
-print_status "The Ollama-aware AWS deployment is ready for use."
+print_status "The Bedrock AWS deployment is ready for use."
 print_status "See docs/AWS_DEPLOYMENT_OLLAMA_AWARE.md for complete deployment instructions."

@@ -42,7 +42,7 @@ coverage.xml
 .pytest_cache/
 
 # Environment variables
-.env
+.env.local
 .venv
 env/
 venv/
@@ -74,6 +74,9 @@ data/results/
 .env.local
 .env.production
 config/secrets.json
+frontend/src/aws_credentials.json
+frontend/src/aws-credentials.json
+frontend/src/static/aws-credentials.json
 
 # GitHub publication specific
 .github/workflows/

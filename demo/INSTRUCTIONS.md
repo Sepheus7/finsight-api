@@ -20,8 +20,8 @@ Then open: `http://localhost:8080/enhanced-demo.html`
 
 ### Option 2: Manual Setup
 ```bash
-# Terminal 1: API Server (from project root)
-python demo/api_server.py
+# Terminal 1: LLM-Enhanced API Server (from project root)
+python demo/llm_api_server.py
 
 # Terminal 2: Frontend  
 cd demo && python -m http.server 8080
@@ -168,7 +168,7 @@ python demo/scripts/pm_demo.py
 ### **If API Won't Start:**
 ```bash
 pip install fastapi uvicorn yfinance pandas
-python api_server.py
+python demo/llm_api_server.py
 ```
 
 ### **If Frontend Won't Load:**

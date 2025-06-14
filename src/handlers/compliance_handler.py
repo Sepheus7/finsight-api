@@ -51,15 +51,29 @@ def lambda_handler(event, context):
             'request_id': request_id
         }
 
-        return response_data
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps(response_data)
+        }
 
     except Exception as e:
         logger.error(f"Compliance checking failed: {str(e)}")
         return {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
             'error': str(e),
             'compliance_flags': [],
             'flagged_issues': [],
             'compliance_score': 0.0
+            })
         }
 
 

@@ -57,6 +57,19 @@ class FinancialClaim:
         """Get primary value (first in list)"""
         return self.values[0] if self.values else ""
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for JSON serialization"""
+        return {
+            'text': self.text,
+            'claim_type': self.claim_type.value,
+            'entities': self.entities,
+            'values': self.values,
+            'confidence': self.confidence,
+            'source_text': self.source_text,
+            'start_pos': self.start_pos,
+            'end_pos': self.end_pos
+        }
+
 
 @dataclass
 class FactCheckResult:
@@ -98,8 +111,13 @@ class AIEvaluation:
     confidence_multiplier: float
     financial_risk: RiskLevel
     misinformation_risk: RiskLevel
-    regulatory_flags: List[str] = None
+    regulatory_flags: Optional[List[str]] = None
     investment_advice_detected: bool = False
+    
+    def __post_init__(self):
+        """Initialize default values"""
+        if self.regulatory_flags is None:
+            self.regulatory_flags = []
 
 
 @dataclass

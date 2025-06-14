@@ -96,7 +96,7 @@ done
 # Test 3: Verify CloudFormation template linting
 print_test "Running comprehensive template validation..."
 
-if sam validate --template template-ollama-aware.yaml --lint > /dev/null 2>&1; then
+if sam validate --template template-bedrock.yaml --lint > /dev/null 2>&1; then
     print_status "✅ CloudFormation template passes all validations including linting"
 else
     print_error "❌ CloudFormation template validation failed"

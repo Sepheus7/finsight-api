@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSight - AI-Powered Financial Analysis</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <h1>FinSight</h1>
+                    <span class="tagline">AI-Powered Financial Analysis</span>
+                </div>
+                <div class="header-actions">
+                    <div class="status-indicator" id="apiStatus">
+                        <i class="fas fa-circle"></i>
+                        <span>Checking...</span>
+                    </div>
+                    <a href="/chat-ui" class="btn btn-primary">
+                        <i class="fas fa-comments"></i> AI Chat
+                    </a>
+                    <a href="/health" class="btn btn-outline" target="_blank">
+                        <i class="fas fa-heartbeat"></i> Health Check
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Configuration Panel -->
+            <section class="config-panel">
+                <h2><i class="fas fa-cog"></i> Configuration</h2>
+                <div class="config-grid">
+            <div class="form-group">
+                <label for="environment">Environment:</label>
+                <select id="environment">
+                            <option value="local">Local (localhost:8000)</option>
+                            <option value="dev">Development</option>
+                    <option value="prod">Production</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="apiEndpoint">API Endpoint:</label>
+                        <input type="text" id="apiEndpoint" value="http://localhost:8000" readonly>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Test Panels -->
+            <div class="test-panels">
+                <!-- Financial Enrichment Panel -->
+                <section class="test-panel" id="enrichmentPanel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-chart-bar"></i> Financial Enrichment</h2>
+                        <p>Extract financial claims and enrich with real-time data</p>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="enrichmentContent">Financial Content:</label>
+                            <textarea id="enrichmentContent" placeholder="Enter financial content to analyze...">Apple (AAPL) stock is trading at $195, up 2.3% today. Tesla (TSLA) is also performing well.</textarea>
+                        </div>
+                        
+                        <div class="options-grid">
+                            <div class="form-group">
+                                <label>Enrichment Types:</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="enrichmentTypes" value="stock_data" checked>
+                                        <span>Stock Data</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="enrichmentTypes" value="market_context">
+                                        <span>Market Context</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="enrichmentTypes" value="economic_indicators">
+                                        <span>Economic Indicators</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Options:</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="includeCompliance" checked>
+                                        <span>Include Compliance Analysis</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="enableCache" checked>
+                                        <span>Enable Caching</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="formatStyle">Format Style:</label>
+                                <select id="formatStyle">
+                                    <option value="enhanced">Enhanced</option>
+                                    <option value="basic">Basic</option>
+                                    <option value="detailed">Detailed</option>
+                </select>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" id="testEnrichment">
+                            <i class="fas fa-play"></i> Test Enrichment
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Fact Checking Panel -->
+                <section class="test-panel" id="factCheckPanel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-search"></i> Enhanced Fact Checking</h2>
+                        <p>AI-powered claim extraction and verification</p>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="factCheckContent">Content to Fact-Check:</label>
+                            <textarea id="factCheckContent" placeholder="Enter content with financial claims...">Apple stock is guaranteed to reach $300 by next month! Microsoft is trading at $400.</textarea>
+                        </div>
+                        
+                        <div class="options-grid">
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="useLLM" checked>
+                                    <span>Use AI (LLM) for Claim Extraction</span>
+                                </label>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="includeContext" checked>
+                                    <span>Include Market Context</span>
+                                </label>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="confidenceThreshold">Confidence Threshold:</label>
+                                <input type="range" id="confidenceThreshold" min="0" max="1" step="0.1" value="0.8">
+                                <span id="confidenceValue">0.8</span>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" id="testFactCheck">
+                            <i class="fas fa-search"></i> Test Fact Check
+                        </button>
+            </div>
+        </section>
+
+                <!-- Compliance Analysis Panel -->
+                <section class="test-panel" id="compliancePanel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-shield-alt"></i> Compliance Analysis</h2>
+                        <p>Detect regulatory compliance issues in financial content</p>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="complianceContent">Content to Analyze:</label>
+                            <textarea id="complianceContent" placeholder="Enter financial content to check for compliance issues...">You should definitely buy Apple stock now! It's guaranteed to make money and has zero risk!</textarea>
+                        </div>
+                        
+                        <div class="options-grid">
+            <div class="form-group">
+                                <label>Check Types:</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="checkTypes" value="investment_advice" checked>
+                                        <span>Investment Advice</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="checkTypes" value="guarantees" checked>
+                                        <span>Guarantees</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="checkTypes" value="disclaimers" checked>
+                                        <span>Disclaimers</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="checkTypes" value="risk_disclosure">
+                                        <span>Risk Disclosure</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" id="testCompliance">
+                            <i class="fas fa-shield-alt"></i> Test Compliance
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Quick Test Examples -->
+            <section class="examples-section">
+                <h2><i class="fas fa-lightbulb"></i> Quick Test Examples</h2>
+                <div class="examples-grid">
+                    <div class="example-card" data-type="enrichment" data-content="Apple (AAPL) stock is trading at $195, up 2.3% today. Tesla (TSLA) is also performing well at $250.">
+                        <h3>Stock Price Claims</h3>
+                        <p>Test enrichment with stock price data</p>
+                    </div>
+                    <div class="example-card" data-type="compliance" data-content="You should definitely buy Apple stock now! It's guaranteed to make money and has zero risk!">
+                        <h3>Compliance Issues</h3>
+                        <p>Test content with compliance violations</p>
+                    </div>
+                    <div class="example-card" data-type="factcheck" data-content="Apple stock is currently trading at $150 and Microsoft is at $400. Both companies have shown strong performance.">
+                        <h3>Fact Checking</h3>
+                        <p>Test AI-powered fact verification</p>
+                    </div>
+                    <div class="example-card" data-type="enrichment" data-content="The Federal Reserve raised interest rates by 0.25% today. This will impact tech stocks like Apple and Google.">
+                        <h3>Economic Impact</h3>
+                        <p>Test economic indicators enrichment</p>
+                    </div>
+                </div>
+        </section>
+
+            <!-- Results Panel -->
+            <section class="results-panel" id="resultsPanel">
+                <div class="results-header">
+                    <h2><i class="fas fa-chart-pie"></i> Results</h2>
+                    <div class="results-info">
+                        <div class="info-item">
+                            <span class="label">Status:</span>
+                            <span id="responseStatus" class="status">Ready</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Response Time:</span>
+                            <span id="responseTime">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Endpoint:</span>
+                            <span id="lastEndpoint">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Results Tabs -->
+                <div class="results-tabs">
+                    <button class="tab-button active" data-tab="formatted">
+                        <i class="fas fa-eye"></i> Formatted
+                    </button>
+                    <button class="tab-button" data-tab="raw">
+                        <i class="fas fa-code"></i> Raw JSON
+                    </button>
+                    <button class="tab-button" data-tab="metrics">
+                        <i class="fas fa-chart-bar"></i> Metrics
+                    </button>
+                </div>
+                
+                <!-- Results Content -->
+                <div class="results-content">
+                    <div class="tab-content active" id="formattedTab">
+                        <div id="formattedResults">
+                            <div class="placeholder">
+                                <i class="fas fa-play-circle"></i>
+                                <p>Run a test to see formatted results here</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="rawTab">
+                        <pre id="rawResults" class="code-block">No results yet...</pre>
+                    </div>
+                    
+                    <div class="tab-content" id="metricsTab">
+                        <div id="metricsResults">
+                            <div class="placeholder">
+                                <i class="fas fa-chart-line"></i>
+                                <p>Performance metrics will appear here</p>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </section>
+        </main>
+    </div>
+
+    <script src="/static/app-simple.js"></script>
+</body>
+</html> 

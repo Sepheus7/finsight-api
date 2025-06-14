@@ -11,7 +11,8 @@ FinSight's **multi-provider LLM strategy** enables flexible deployment across di
 ## 🏗️ Provider Architecture
 
 ### Multi-Provider Strategy
-```
+
+```text
 🦙 Ollama (Local)
 ├── Advantages: Privacy, cost-free, offline capability
 ├── Use Cases: Development, on-premise, sensitive data
@@ -34,6 +35,7 @@ FinSight's **multi-provider LLM strategy** enables flexible deployment across di
 ```
 
 ### Intelligent Provider Switching
+
 ```python
 def select_provider(config: LLMConfig) -> LLMProvider:
     """Smart provider selection with fallback logic"""
@@ -56,6 +58,7 @@ def select_provider(config: LLMConfig) -> LLMProvider:
 ## 🦙 Ollama Integration
 
 ### Local Development Setup
+
 ```bash
 # Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
@@ -70,6 +73,7 @@ ollama serve
 ```
 
 ### Configuration
+
 ```bash
 # Environment variables
 FINSIGHT_LLM_PROVIDER=ollama
@@ -84,6 +88,7 @@ OLLAMA_CONTEXT_LENGTH=4096     # Input context window
 ```
 
 ### Python Integration
+
 ```python
 class OllamaProvider:
     def __init__(self, config: LLMConfig):
@@ -121,6 +126,7 @@ class OllamaProvider:
 ```
 
 ### Ollama-Specific Optimizations
+
 ```python
 # Model warming for faster responses
 def warm_ollama_model():
@@ -146,6 +152,7 @@ session.mount("http://", adapter)
 ## ☁️ OpenAI Integration
 
 ### API Configuration
+
 ```bash
 # Environment variables
 FINSIGHT_LLM_PROVIDER=openai
@@ -156,6 +163,7 @@ OPENAI_PROJECT=proj-...          # Optional
 ```
 
 ### Model Selection Strategy
+
 ```python
 # Production-optimized model selection
 MODEL_SELECTION = {
@@ -175,6 +183,7 @@ def select_openai_model(claim_complexity: str) -> str:
 ```
 
 ### Implementation
+
 ```python
 import openai
 from openai import AsyncOpenAI
@@ -211,6 +220,7 @@ class OpenAIProvider:
 ```
 
 ### Cost Optimization
+
 ```python
 # Token usage tracking
 def track_token_usage(response):
@@ -234,6 +244,7 @@ async def batch_extract_claims(texts: List[str]) -> List[List[FinancialClaim]]:
 ## 🔮 Anthropic Integration
 
 ### Claude Configuration
+
 ```bash
 # Environment variables
 FINSIGHT_LLM_PROVIDER=anthropic
@@ -243,6 +254,7 @@ ANTHROPIC_VERSION=2023-06-01
 ```
 
 ### Model Options
+
 ```python
 ANTHROPIC_MODELS = {
     'haiku': 'claude-3-haiku-20240307',     # Fast, cost-effective
@@ -260,7 +272,8 @@ def select_claude_model(use_case: str) -> str:
         return ANTHROPIC_MODELS['haiku']    # Default
 ```
 
-### Implementation
+### Implementation of the Model
+
 ```python
 import anthropic
 
@@ -294,6 +307,7 @@ class AnthropicProvider:
 ## 📐 Regex Fallback System
 
 ### Pattern-Based Extraction
+
 ```python
 class RegexProvider:
     """Always-available fallback extraction"""
@@ -329,6 +343,7 @@ class RegexProvider:
 ```
 
 ### Pattern Optimization
+
 ```python
 # Advanced regex patterns with improved accuracy
 ENHANCED_PATTERNS = {
@@ -362,6 +377,7 @@ def extract_with_context(text: str) -> List[FinancialClaim]:
 ## 🔄 Provider Switching Logic
 
 ### Automatic Failover
+
 ```python
 class LLMManager:
     def __init__(self, config: LLMConfig):
@@ -414,6 +430,7 @@ class LLMManager:
 ```
 
 ### Health Monitoring
+
 ```python
 class ProviderHealthMonitor:
     def __init__(self):
@@ -450,6 +467,7 @@ class ProviderHealthMonitor:
 ## 🎯 Prompt Engineering
 
 ### System Prompts
+
 ```python
 FINANCIAL_CLAIM_EXTRACTION_PROMPT = """
 You are a financial data extraction expert. Your task is to identify and extract financial claims from text.
@@ -512,6 +530,7 @@ Return structured JSON with extracted claims including confidence scores.
 ```
 
 ### Response Parsing
+
 ```python
 def parse_llm_response(response: str, provider: str) -> List[FinancialClaim]:
     """Parse LLM response into structured claims"""
@@ -550,6 +569,7 @@ def parse_llm_response(response: str, provider: str) -> List[FinancialClaim]:
 ## 📊 Performance Optimization
 
 ### Caching Strategy
+
 ```python
 class LLMCache:
     def __init__(self, cache_duration_hours: int = 24):
@@ -585,6 +605,7 @@ class LLMCache:
 ```
 
 ### Async Processing
+
 ```python
 async def parallel_claim_extraction(texts: List[str]) -> List[List[FinancialClaim]]:
     """Process multiple texts concurrently"""
@@ -623,6 +644,7 @@ async def parallel_claim_extraction(texts: List[str]) -> List[List[FinancialClai
 ## 📋 LLM Integration Checklist
 
 ### Provider Setup
+
 - [ ] API keys configured and tested
 - [ ] Model selection optimized for use case  
 - [ ] Rate limits and quotas understood
@@ -630,6 +652,7 @@ async def parallel_claim_extraction(texts: List[str]) -> List[List[FinancialClai
 - [ ] Health monitoring enabled
 
 ### Performance Optimization  
+
 - [ ] Caching implemented
 - [ ] Async processing enabled
 - [ ] Token usage tracking active
@@ -637,6 +660,7 @@ async def parallel_claim_extraction(texts: List[str]) -> List[List[FinancialClai
 - [ ] Error handling robust
 
 ### Security & Compliance
+
 - [ ] API keys securely stored
 - [ ] Data privacy requirements met
 - [ ] Rate limiting implemented

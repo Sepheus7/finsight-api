@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSight AI Chat - Intelligent Financial Assistant</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-50: #eff6ff;
+            --success-500: #10b981;
+            --success-600: #059669;
+            --success-50: #ecfdf5;
+            --warning-500: #f59e0b;
+            --error-500: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-900);
+            background: var(--gray-50);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .chat-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .logo i {
+            font-size: 1.5rem;
+            color: var(--primary-600);
+        }
+        
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        
+        .chat-subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: 1rem;
+        }
+        
+        .new-chat-btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--primary-600);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .new-chat-btn:hover {
+            background: var(--primary-700);
+        }
+        
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .chat-history h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .chat-item {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .chat-item:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-200);
+        }
+        
+        .chat-item.active {
+            background: var(--primary-50);
+            border-color: var(--primary-200);
+        }
+        
+        .chat-item-title {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+            line-height: 1.4;
+        }
+        
+        .chat-item-preview {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            line-height: 1.3;
+        }
+        
+        .chat-item-time {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            margin-top: 0.25rem;
+        }
+        
+        /* Main Chat Area */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        .chat-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--primary-600);
+            color: white;
+            text-decoration: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .nav-link:hover {
+            background: var(--primary-700);
+            color: white;
+        }
+        
+        .chat-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .chat-title h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        
+        .chat-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--success-600);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-500);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .chat-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .action-btn {
+            padding: 0.5rem;
+            border: 1px solid var(--gray-200);
+            background: white;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--gray-600);
+        }
+        
+        .action-btn:hover {
+            background: var(--gray-50);
+            color: var(--gray-900);
+        }
+        
+        /* Messages Area */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            background: var(--gray-50);
+        }
+        
+        .message {
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .message.user .message-avatar {
+            background: var(--primary-600);
+            color: white;
+        }
+        
+        .message.assistant .message-avatar {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+        
+        .message-content {
+            max-width: 70%;
+            background: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            border: 1px solid var(--gray-200);
+        }
+        
+        .message.user .message-content {
+            background: var(--primary-600);
+            color: white;
+            border-color: var(--primary-600);
+        }
+        
+        .message-text {
+            line-height: 1.6;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            margin-top: 0.5rem;
+        }
+        
+        .message.user .message-time {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Typing Indicator */
+        .typing-indicator {
+            display: none;
+            margin-bottom: 1.5rem;
+        }
+        
+        .typing-indicator.active {
+            display: flex;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 1rem;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--gray-400);
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Input Area */
+        .input-container {
+            padding: 1rem 1.5rem;
+            background: white;
+            border-top: 1px solid var(--gray-200);
+        }
+        
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: end;
+            gap: 0.75rem;
+            max-width: 100%;
+        }
+        
+        .message-input {
+            flex: 1;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 1rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            resize: none;
+            transition: all 0.2s;
+            background: var(--gray-50);
+        }
+        
+        .message-input:focus {
+            outline: none;
+            border-color: var(--primary-600);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .message-input::placeholder {
+            color: var(--gray-400);
+        }
+        
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            background: var(--primary-600);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .send-btn:hover:not(:disabled) {
+            background: var(--primary-700);
+            transform: scale(1.05);
+        }
+        
+        .send-btn:disabled {
+            background: var(--gray-300);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Welcome Screen */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .welcome-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-50);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .welcome-icon i {
+            font-size: 2rem;
+            color: var(--primary-600);
+        }
+        
+        .welcome-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+        
+        .welcome-subtitle {
+            font-size: 1rem;
+            color: var(--gray-600);
+            margin-bottom: 2rem;
+            max-width: 500px;
+        }
+        
+        .example-queries {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .example-query {
+            padding: 1rem;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        
+        .example-query:hover {
+            border-color: var(--primary-300);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .example-query-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-50);
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .example-query-icon i {
+            color: var(--primary-600);
+        }
+        
+        .example-query-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .example-query-text {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            line-height: 1.4;
+        }
+        
+        /* Data Visualization */
+        .data-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .data-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .data-card-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--gray-900);
+        }
+        
+        .data-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .data-metric:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+        
+        .metric-value {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--gray-900);
+        }
+        
+        .metric-value.positive {
+            color: var(--success-600);
+        }
+        
+        .metric-value.negative {
+            color: var(--error-500);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 280px;
+                position: absolute;
+                left: -280px;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+            
+            .sidebar.open {
+                left: 0;
+            }
+            
+            .chat-main {
+                width: 100%;
+            }
+            
+            .example-queries {
+                grid-template-columns: 1fr;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+        }
+        
+        /* Loading States */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-comments-dollar"></i>
+                    <span class="logo-text">FinSight AI</span>
+                </div>
+                <p class="chat-subtitle">Intelligent Financial Assistant powered by AWS Bedrock</p>
+                <button class="new-chat-btn" id="newChatBtn">
+                    <i class="fas fa-plus"></i>
+                    New Conversation
+                </button>
+            </div>
+            
+            <div class="chat-history">
+                <h3>Recent Conversations</h3>
+                <div id="chatHistoryList">
+                    <!-- Chat history items will be populated here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div class="chat-main">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <button class="action-btn" id="toggleSidebar" style="display: none;">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="chatTitle">Financial AI Assistant</h1>
+                </div>
+                <div class="chat-status">
+                    <div class="status-dot"></div>
+                    <span>AI Ready</span>
+                </div>
+                <a href="/" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    Main Dashboard
+                </a>
+                <div class="chat-actions">
+                    <button class="action-btn" id="clearChatBtn" title="Clear conversation">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="action-btn" id="exportChatBtn" title="Export conversation">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="action-btn" id="settingsBtn" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer">
+                <!-- Welcome Screen -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h2 class="welcome-title">Welcome to FinSight AI</h2>
+                    <p class="welcome-subtitle">
+                        Your intelligent financial assistant powered by AWS Bedrock. Ask complex questions about market data, 
+                        portfolio performance, economic indicators, and get comprehensive analysis with real-time data.
+                    </p>
+                    
+                    <div class="example-queries">
+                        <div class="example-query" data-query="What's the YTD performance of our growth fund vs the S&P 500, and summarize any notable portfolio changes?">
+                            <div class="example-query-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="example-query-title">Portfolio Performance Analysis</div>
+                            <div class="example-query-text">Compare fund performance against benchmarks with detailed analysis</div>
+                        </div>
+                        
+                        <div class="example-query" data-query="Analyze Apple's financial health and provide investment recommendations based on current market conditions">
+                            <div class="example-query-icon">
+                                <i class="fas fa-search-dollar"></i>
+                            </div>
+                            <div class="example-query-title">Stock Analysis & Recommendations</div>
+                            <div class="example-query-text">Deep dive into company fundamentals and market positioning</div>
+                        </div>
+                        
+                        <div class="example-query" data-query="What are the current economic indicators suggesting about inflation trends and how might this impact tech stocks?">
+                            <div class="example-query-icon">
+                                <i class="fas fa-globe-americas"></i>
+                            </div>
+                            <div class="example-query-title">Economic Impact Analysis</div>
+                            <div class="example-query-text">Correlate macroeconomic trends with sector-specific impacts</div>
+                        </div>
+                        
+                        <div class="example-query" data-query="Review our portfolio for compliance issues and suggest risk mitigation strategies">
+                            <div class="example-query-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="example-query-title">Risk & Compliance Review</div>
+                            <div class="example-query-text">Comprehensive risk assessment with regulatory compliance check</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Messages will be populated here -->
+                
+                <!-- Typing Indicator -->
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        class="message-input" 
+                        placeholder="Ask me anything about financial markets, portfolio analysis, or economic trends..."
+                        rows="1"
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/chat-app.js"></script>
+</body>
+</html> 

@@ -24,9 +24,9 @@ def lambda_handler(event, context):
             "timestamp": datetime.now().isoformat(),
             "service": "Financial AI Quality Enhancement API",
             "version": "1.0.0-serverless",
-            "aws_request_id": context.aws_request_id,
-            "remaining_time_ms": context.get_remaining_time_in_millis(),
-            "memory_limit_mb": context.memory_limit_in_mb
+            "aws_request_id": getattr(context, 'aws_request_id', 'test-request'),
+            "remaining_time_ms": getattr(context, 'get_remaining_time_in_millis', lambda: 30000)(),
+            "memory_limit_mb": getattr(context, 'memory_limit_in_mb', '1024')
         }
         
         return {
@@ -47,7 +47,7 @@ def lambda_handler(event, context):
             "status": "unhealthy",
             "timestamp": datetime.now().isoformat(),
             "error": str(e),
-            "aws_request_id": context.aws_request_id
+            "aws_request_id": getattr(context, 'aws_request_id', 'test-request')
         }
         
         return {
