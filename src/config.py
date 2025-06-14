@@ -31,7 +31,7 @@ class LLMConfig:
         
         # Check if we're in local development (Ollama available)
         if self._is_local_development():
-            return "ollama"
+            return "bedrock"  # Use Bedrock in local development too
         
         # Fall back to configured provider
         return self.provider

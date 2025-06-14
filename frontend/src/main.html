@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSight - AI-Powered Financial Analysis Platform</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-50: #eff6ff;
+            --success-500: #10b981;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-900);
+            background: var(--gray-50);
+        }
+        
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Navigation Header */
+        .main-header {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .logo i {
+            font-size: 2rem;
+            color: #fbbf24;
+        }
+        
+        .logo-text {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+        
+        .tagline {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-left: 1rem;
+        }
+        
+        .main-nav {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-500);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+        }
+        
+        .page-section {
+            display: none;
+        }
+        
+        .page-section.active {
+            display: block;
+        }
+        
+        /* Home Page Styles */
+        .hero-section {
+            text-align: center;
+            padding: 4rem 0 3rem;
+            background: linear-gradient(135deg, #ffffff 0%, var(--gray-50) 100%);
+            border-radius: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: var(--gray-900);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--success-500) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            border: 1px solid var(--gray-200);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-600);
+            margin-bottom: 1rem;
+        }
+        
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        
+        .feature-description {
+            color: var(--gray-600);
+            line-height: 1.6;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .main-nav {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+        }
+        
+        /* Loading and Error States */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-600);
+            font-style: italic;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #ef4444;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 0.5rem;
+            margin: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Main Header with Navigation -->
+        <header class="main-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <div>
+                        <div class="logo-text">FinSight</div>
+                        <div class="tagline">AI-Powered Financial Analysis</div>
+                    </div>
+                </div>
+                
+                <nav class="main-nav">
+                    <button class="nav-item active" data-page="home">
+                        <i class="fas fa-home"></i> Home
+                    </button>
+                    <button class="nav-item" data-page="chat">
+                        <i class="fas fa-comments"></i> AI Chat
+                    </button>
+                    <button class="nav-item" data-page="rag">
+                        <i class="fas fa-brain"></i> RAG Platform
+                    </button>
+                    <button class="nav-item" data-page="tools">
+                        <i class="fas fa-tools"></i> Analysis Tools
+                    </button>
+                    <div class="status-indicator" id="apiStatus">
+                        <div class="status-dot"></div>
+                        <span>API Ready</span>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Home Page -->
+            <section id="home-page" class="page-section active">
+                <div class="hero-section">
+                    <h1 class="hero-title">
+                        Welcome to <span class="gradient-text">FinSight</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Your comprehensive AI-powered financial analysis platform. Get real-time market data, 
+                        intelligent insights, and compliance-checked financial information.
+                    </p>
+                </div>
+                
+                <div class="feature-grid">
+                    <div class="feature-card" data-navigate="chat">
+                        <div class="feature-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <h3 class="feature-title">AI Financial Chat</h3>
+                        <p class="feature-description">
+                            Chat with our intelligent financial assistant powered by advanced LLMs. 
+                            Get instant answers about stocks, market trends, and economic indicators.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card" data-navigate="rag">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="feature-title">RAG Knowledge Platform</h3>
+                        <p class="feature-description">
+                            Access our Retrieval-Augmented Generation system for comprehensive 
+                            financial research with real-time data integration.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card" data-navigate="tools">
+                        <div class="feature-icon">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <h3 class="feature-title">Analysis Tools</h3>
+                        <p class="feature-description">
+                            Professional-grade tools for financial enrichment, fact-checking, 
+                            and compliance analysis of financial content.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card" onclick="window.open('/health', '_blank')">
+                        <div class="feature-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <h3 class="feature-title">System Health</h3>
+                        <p class="feature-description">
+                            Monitor the health and performance of all FinSight services 
+                            and data sources in real-time.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chat Page -->
+            <section id="chat-page" class="page-section">
+                <div id="chat-container"></div>
+            </section>
+
+            <!-- RAG Page -->
+            <section id="rag-page" class="page-section">
+                <div id="rag-container"></div>
+            </section>
+
+            <!-- Tools Page -->
+            <section id="tools-page" class="page-section">
+                <div id="tools-container"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/api.js"></script>
+    <script>
+        // Initialize API client
+        const api = new FinSightAPI();
+        
+        // Navigation functionality
+        function initNavigation() {
+            console.log('Initializing navigation');
+            const navItems = document.querySelectorAll('.nav-item[data-page]');
+            const pageSection = document.querySelectorAll('.page-section');
+            
+            console.log('Found nav items:', navItems.length);
+            console.log('Found page sections:', pageSection.length);
+            
+            navItems.forEach(item => {
+                console.log('Adding click listener to:', item.dataset.page);
+                item.addEventListener('click', () => {
+                    const targetPage = item.dataset.page;
+                    console.log('Nav item clicked:', targetPage);
+                    navigateToPage(targetPage);
+                });
+            });
+            
+            // Feature card navigation
+            document.querySelectorAll('.feature-card[data-navigate]').forEach(card => {
+                console.log('Adding click listener to feature card:', card.dataset.navigate);
+                card.addEventListener('click', () => {
+                    const targetPage = card.dataset.navigate;
+                    console.log('Feature card clicked:', targetPage);
+                    navigateToPage(targetPage);
+                });
+            });
+            
+            console.log('Navigation initialized');
+        }
+        
+        function navigateToPage(pageName) {
+            console.log('Navigating to page:', pageName);
+            
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const targetNavItem = document.querySelector(`[data-page="${pageName}"]`);
+            if (targetNavItem) {
+                targetNavItem.classList.add('active');
+            }
+            
+            // Show target page
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            const targetSection = document.getElementById(`${pageName}-page`);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            // Load page content if needed
+            if (pageName !== 'home') {
+                loadPageContent(pageName);
+            }
+        }
+        
+        async function loadPageContent(pageName) {
+            const container = document.getElementById(`${pageName}-container`);
+            
+            if (container && !container.hasChildNodes()) {
+                // Show loading message
+                container.innerHTML = '<div class="loading">Loading...</div>';
+                
+                try {
+                    let content = '';
+                    
+                    switch(pageName) {
+                        case 'chat':
+                            content = await loadChatInterface();
+                            break;
+                        case 'rag':
+                            content = await loadRAGInterface();
+                            break;
+                        case 'tools':
+                            content = await loadToolsInterface();
+                            break;
+                        default:
+                            content = '<div class="error">Page not found</div>';
+                    }
+                    
+                    container.innerHTML = content;
+                    
+                    // Initialize page-specific functionality
+                    if (pageName === 'chat') {
+                        initChatInterface();
+                    } else if (pageName === 'rag') {
+                        initRAGInterface();
+                    } else if (pageName === 'tools') {
+                        initToolsInterface();
+                    }
+                } catch (error) {
+                    console.error(`Failed to load ${pageName} content:`, error);
+                    container.innerHTML = `<div class="error">Failed to load ${pageName} interface. Error: ${error.message}</div>`;
+                }
+            }
+        }
+        
+        async function loadChatInterface() {
+            // Load chat interface from chat.html
+            try {
+                const response = await fetch('/static/chat.html');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const html = await response.text();
+                
+                // Extract just the chat interface content (without html/head/body tags)
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const chatContainer = doc.querySelector('.chat-container');
+                
+                return chatContainer ? chatContainer.outerHTML : '<div class="error">Chat interface not available</div>';
+            } catch (error) {
+                console.error('Failed to load chat interface:', error);
+                return '<div class="error">Failed to load chat interface. Please try again.</div>';
+            }
+        }
+        
+        async function loadRAGInterface() {
+            // Load RAG interface from index-rag.html
+            try {
+                const response = await fetch('/static/index-rag.html');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const html = await response.text();
+                
+                // Extract main content
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const mainContent = doc.querySelector('.main-content');
+                
+                return mainContent ? mainContent.innerHTML : '<div class="error">RAG interface not available</div>';
+            } catch (error) {
+                console.error('Failed to load RAG interface:', error);
+                return '<div class="error">Failed to load RAG interface. Please try again.</div>';
+            }
+        }
+        
+        async function loadToolsInterface() {
+            // Load tools interface from index.html
+            try {
+                const response = await fetch('/static/index.html');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const html = await response.text();
+                
+                // Extract test panels
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const testPanels = doc.querySelector('.test-panels');
+                
+                return testPanels ? testPanels.outerHTML : '<div class="error">Tools interface not available</div>';
+            } catch (error) {
+                console.error('Failed to load tools interface:', error);
+                return '<div class="error">Failed to load tools interface. Please try again.</div>';
+            }
+        }
+        
+        function initChatInterface() {
+            // Initialize chat functionality
+            if (typeof initializeChat === 'function') {
+                initializeChat();
+            } else {
+                // Load chat-app.js dynamically
+                const script = document.createElement('script');
+                script.src = '/static/chat-app.js';
+                script.onload = () => {
+                    if (typeof FinSightChat !== 'undefined') {
+                        new FinSightChat();
+                    }
+                };
+                document.head.appendChild(script);
+            }
+        }
+        
+        function initRAGInterface() {
+            // Initialize RAG functionality
+            if (typeof initializeRAG === 'function') {
+                initializeRAG();
+            } else {
+                // Load rag-app.js dynamically
+                const script = document.createElement('script');
+                script.src = '/static/rag-app.js';
+                script.onload = () => {
+                    if (typeof initializeRAG === 'function') {
+                        initializeRAG();
+                    }
+                };
+                document.head.appendChild(script);
+            }
+        }
+        
+        function initToolsInterface() {
+            // Initialize tools functionality
+            if (typeof initializeTools === 'function') {
+                initializeTools();
+            } else {
+                // Load app.js dynamically
+                const script = document.createElement('script');
+                script.src = '/static/app.js';
+                script.onload = () => {
+                    if (typeof initializeTools === 'function') {
+                        initializeTools();
+                    }
+                };
+                document.head.appendChild(script);
+            }
+        }
+        
+        // API Status Check
+        async function checkAPIStatus() {
+            try {
+                await api.getHealth();
+                document.getElementById('apiStatus').innerHTML = `
+                    <div class="status-dot"></div>
+                    <span>API Ready</span>
+                `;
+            } catch (error) {
+                document.getElementById('apiStatus').innerHTML = `
+                    <div class="status-dot" style="background: #ef4444;"></div>
+                    <span>API Offline</span>
+                `;
+            }
+        }
+        
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded');
+            console.log('FinSightAPI available:', typeof FinSightAPI !== 'undefined');
+            
+            initNavigation();
+            checkAPIStatus();
+            
+            // Check API status every 30 seconds
+            setInterval(checkAPIStatus, 30000);
+            
+            console.log('Application initialized');
+        });
+    </script>
+</body>
+</html> 

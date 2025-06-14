@@ -1,0 +1,204 @@
+{
+  "validation_timestamp": 1749907574.4740758,
+  "validation_status": "PASSED",
+  "test_results": [
+    {
+      "test": "Core RAG Handler Import",
+      "status": "PASS",
+      "details": "FinancialRAGHandler imported successfully",
+      "duration_ms": 1006.82,
+      "critical": true
+    },
+    {
+      "test": "DataAggregator Import",
+      "status": "PASS",
+      "details": "Successfully imported DataAggregator",
+      "duration_ms": 0.0,
+      "critical": true
+    },
+    {
+      "test": "CacheManager Import",
+      "status": "PASS",
+      "details": "Successfully imported CacheManager",
+      "duration_ms": 0.0,
+      "critical": true
+    },
+    {
+      "test": "ClaimExtractor Import",
+      "status": "PASS",
+      "details": "Successfully imported ClaimExtractor",
+      "duration_ms": 0.0,
+      "critical": true
+    },
+    {
+      "test": "Enrichment Models Import",
+      "status": "PASS",
+      "details": "Successfully imported DataPoint and DataSourceType",
+      "duration_ms": 0.0,
+      "critical": false
+    },
+    {
+      "test": "RAG Handler Initialization",
+      "status": "PASS",
+      "details": "Handler initialized successfully",
+      "duration_ms": 550.71,
+      "critical": true
+    },
+    {
+      "test": "DataAggregator component Accessibility",
+      "status": "PASS",
+      "details": "Component accessible and not None",
+      "duration_ms": 0.0,
+      "critical": false
+    },
+    {
+      "test": "CacheManager component Accessibility",
+      "status": "PASS",
+      "details": "Component accessible and not None",
+      "duration_ms": 0.0,
+      "critical": false
+    },
+    {
+      "test": "ClaimExtractor component Accessibility",
+      "status": "PASS",
+      "details": "Component accessible and not None",
+      "duration_ms": 0.0,
+      "critical": false
+    },
+    {
+      "test": "Basic Query Processing",
+      "status": "PASS",
+      "details": "Query processed successfully with correct structure",
+      "duration_ms": 743.41,
+      "critical": true
+    },
+    {
+      "test": "Intent Detection: valuation",
+      "status": "PASS",
+      "details": "Correctly detected 'valuation' for 'What's the price of Apple?...'",
+      "duration_ms": 0.01,
+      "critical": false
+    },
+    {
+      "test": "Intent Detection: comparison",
+      "status": "PASS",
+      "details": "Correctly detected 'comparison' for 'Compare Apple vs Microsoft...'",
+      "duration_ms": 0.01,
+      "critical": false
+    },
+    {
+      "test": "Intent Detection: portfolio_analysis",
+      "status": "PASS",
+      "details": "Correctly detected 'portfolio_analysis' for 'Portfolio allocation analysis...'",
+      "duration_ms": 0.0,
+      "critical": false
+    },
+    {
+      "test": "Intent Detection: economic_analysis",
+      "status": "PASS",
+      "details": "Correctly detected 'economic_analysis' for 'Economic indicators...'",
+      "duration_ms": 0.0,
+      "critical": false
+    },
+    {
+      "test": "Complexity Assessment: low",
+      "status": "PASS",
+      "details": "Correctly assessed as 'low'",
+      "duration_ms": 0.0,
+      "critical": false
+    },
+    {
+      "test": "Complexity Assessment: medium",
+      "status": "PASS",
+      "details": "Correctly assessed as 'medium'",
+      "duration_ms": 0.0,
+      "critical": false
+    },
+    {
+      "test": "Complexity Assessment: high",
+      "status": "PASS",
+      "details": "Correctly assessed as 'high'",
+      "duration_ms": 0.0,
+      "critical": false
+    },
+    {
+      "test": "Edge Case: Empty Query",
+      "status": "PASS",
+      "details": "Handler gracefully handled edge case",
+      "duration_ms": 919.95,
+      "critical": false
+    },
+    {
+      "test": "Edge Case: Very Long Query",
+      "status": "PASS",
+      "details": "Handler gracefully handled edge case",
+      "duration_ms": 619.67,
+      "critical": false
+    },
+    {
+      "test": "Edge Case: Special Characters",
+      "status": "PASS",
+      "details": "Handler gracefully handled edge case",
+      "duration_ms": 943.96,
+      "critical": false
+    },
+    {
+      "test": "Edge Case: Invalid Symbols",
+      "status": "PASS",
+      "details": "Handler gracefully handled edge case",
+      "duration_ms": 218.89,
+      "critical": false
+    },
+    {
+      "test": "Edge Case: Non-English Query",
+      "status": "PASS",
+      "details": "Handler gracefully handled edge case",
+      "duration_ms": 1401.28,
+      "critical": false
+    },
+    {
+      "test": "Performance: Single Symbol Query",
+      "status": "PASS",
+      "details": "Completed in 0.16ms (limit: 3000ms)",
+      "duration_ms": 0.16,
+      "critical": false
+    },
+    {
+      "test": "Performance: Multiple Symbol Query",
+      "status": "PASS",
+      "details": "Completed in 227.94ms (limit: 8000ms)",
+      "duration_ms": 227.94,
+      "critical": false
+    },
+    {
+      "test": "Performance: Intent Analysis Speed",
+      "status": "PASS",
+      "details": "Completed in 0.03ms (limit: 100ms)",
+      "duration_ms": 0.03,
+      "critical": true
+    },
+    {
+      "test": "Market Insights Generation",
+      "status": "PASS",
+      "details": "Generated 2 insights",
+      "duration_ms": 0.01,
+      "critical": false
+    },
+    {
+      "test": "Summary Generation",
+      "status": "PASS",
+      "details": "Generated summary: 'Analyzed 1 stocks with average change of 2.50%...'",
+      "duration_ms": 0.01,
+      "critical": false
+    }
+  ],
+  "summary": {
+    "total_tests": 27,
+    "passed": 27,
+    "failed": 0,
+    "warnings": 0,
+    "skipped": 0,
+    "critical_failures": 0
+  },
+  "critical_failures": []
+}

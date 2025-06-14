@@ -1,359 +1,194 @@
-# 🚀 FinSight Deployment Guide - Multi-Environment Setup
+# FinSight Deployment Guide
 
-## 🎯 Deployment Strategy Overview
+## Overview
 
-FinSight supports multiple deployment configurations to accommodate different LLM hosting preferences:
+This guide covers the deployment of FinSight across different environments, from local development to production AWS deployment.
 
-### **Deployment Matrix**
+## Prerequisites
 
-| Environment | Primary LLM | Fallback | Use Case |
-|-------------|-------------|----------|----------|
-| **Local Development** | Ollama (localhost) | Regex | Development, testing |
-| **Docker (Ollama)** | Ollama (container) | Regex | On-premise, air-gapped |
-| **AWS Lambda** | OpenAI/Anthropic | Regex | Serverless, cloud-native |
-| **Cloud Run (Hybrid)** | Ollama + Cloud APIs | Regex | Flexible cloud deployment |
+- Python 3.8+
+- AWS CLI configured
+- AWS SAM CLI installed
+- Docker (for containerized deployment)
 
----
+## Local Development
 
-## 🦙 **Option 1: Local Development with Ollama (Recommended)**
-
-### Prerequisites
+### 1. Setup Environment
 
 ```bash
-# Install Ollama
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# Pull recommended model
-ollama pull llama3.2:3b
-
-# Start Ollama server
-ollama serve
-```
-
-### Setup FinSight
-
-```bash
-# Clone and setup
-git clone <repository-url>
+# Clone repository
+git clone https://github.com/your-username/FinSight.git
 cd FinSight
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+
+# Install dependencies
 pip install -r requirements.txt
-
-# Configure environment
-cp .env.template .env
-# Edit .env: FINSIGHT_LLM_PROVIDER=ollama
-
-# Run locally
-python src/main.py --interactive
 ```
 
-### API Server (Local)
+### 2. Configure Environment Variables
+
+Copy `.env.template` to `.env` and configure:
 
 ```bash
-# Start FastAPI server with Ollama
-python finai_quality_api.py
+# Financial Data APIs
+ALPHA_VANTAGE_API_KEY=your_key_here  # Optional: Enhanced data
+FRED_API_KEY=your_key_here           # Optional: Economic indicators
 
-# Test endpoint
-curl http://localhost:8000/health
+# Performance Tuning
+CACHE_TTL_STOCK_DATA=3600           # 1 hour cache
+MAX_CONCURRENT_REQUESTS=10          # Concurrent limit
 ```
 
----
+### 3. Start Development Server
 
-## ☁️ **Option 2: AWS Lambda (Serverless - Cloud LLM)**
+```bash
+python api_server.py
+```
 
-> **⚠️ Important**: AWS Lambda cannot run Ollama locally. For detailed AWS deployment with Ollama-aware configuration, see [AWS Deployment Guide](./AWS_DEPLOYMENT_OLLAMA_AWARE.md).
+The server will be available at `http://localhost:8000`
 
-### Quick AWS Deployment
+## AWS Deployment
+
+### 1. AWS Lambda Deployment
 
 ```bash
 cd deployment/aws
 
-# Development with OpenAI
-./deploy.sh deploy --stage dev --llm-provider openai --openai-key "$OPENAI_API_KEY"
+# Deploy to dev environment
+./deploy.sh --stage dev
 
-# Production with Anthropic  
-./deploy.sh deploy --stage prod --llm-provider anthropic --anthropic-key "$ANTHROPIC_API_KEY"
-
-# Cost-free deployment (regex only)
-./deploy.sh deploy --stage dev --llm-provider regex
+# Deploy to production
+./deploy.sh --stage prod
 ```
 
-### Key Features
+### 2. Configuration Options
 
-- ✅ Automatic LLM provider fallback (OpenAI → Anthropic → Regex)
-- ✅ Secure API key management  
-- ✅ Cost optimization by deployment stage
-- ✅ CloudWatch monitoring and alerting
-- ✅ Production-ready scaling and performance
-
-### 📖 Complete AWS Guide
-
-For comprehensive AWS deployment instructions, including:
-
-- Detailed LLM provider configuration
-- Cost optimization strategies 
-- Monitoring and troubleshooting
-- CI/CD integration examples
-- Security best practices
-
-**👉 See [Complete AWS Deployment Guide](./AWS_DEPLOYMENT_OLLAMA_AWARE.md)**
-
----
-
-## 🐳 **Option 3: Docker Deployment**
-
-### Basic Docker Deployment
+The deployment script supports several options:
 
 ```bash
-# Build image
-docker build -t finsight-api .
+./deploy.sh --stage dev --region us-east-1 --stack-name finsight
+```
 
-# Run with environment variables
+Options:
+- `--stage`: Deployment stage (dev, staging, prod)
+- `--region`: AWS region
+- `--stack-name`: CloudFormation stack name
+- `--llm-provider`: LLM provider (bedrock, openai, anthropic, regex)
+
+### 3. Environment-Specific Configuration
+
+#### Development
+- Uses local file caching
+- Debug mode enabled
+- No rate limiting
+
+#### Production
+- DynamoDB caching
+- CloudWatch monitoring
+- Rate limiting enabled
+- API Gateway caching
+
+## Docker Deployment
+
+### 1. Build Image
+
+```bash
+docker build -t finsight .
+```
+
+### 2. Run Container
+
+```bash
 docker run -p 8000:8000 \
-  -e FINSIGHT_LLM_PROVIDER=openai \
-  -e OPENAI_API_KEY=your-key-here \
-  finsight-api
+  -e ALPHA_VANTAGE_API_KEY=your_key \
+  -e FRED_API_KEY=your_key \
+  finsight
 ```
 
-### Docker Compose (Full Stack)
+## Monitoring & Maintenance
 
-```yaml
-version: '3.8'
-services:
-  finsight-api:
-    build: .
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://user:pass@db:5432/finai
-      - REDIS_URL=redis://redis:6379
-      - FINSIGHT_LLM_PROVIDER=openai
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    depends_on:
-      - db
-      - redis
-  
-  db:
-    image: postgres:13
-    environment:
-      - POSTGRES_DB=finai
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=pass
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-  
-  redis:
-    image: redis:6-alpine
-    
-volumes:
-  postgres_data:
-```
-
-### Docker with Ollama Support
-
-```yaml
-version: '3.8'
-services:
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-  
-  finsight-api:
-    build: .
-    ports:
-      - "8000:8000"
-    environment:
-      - FINSIGHT_LLM_PROVIDER=ollama
-      - OLLAMA_BASE_URL=http://ollama:11434
-    depends_on:
-      - ollama
-
-volumes:
-  ollama_data:
-```
-
----
-
-## ⚡ **Option 4: Cloud Platforms**
-
-### Heroku
+### 1. Health Checks
 
 ```bash
-# Install Heroku CLI and login
-heroku login
+# Check API health
+curl http://localhost:8000/health
 
-# Create app
-heroku create your-finsight-api
-
-# Set environment variables
-heroku config:set FINSIGHT_LLM_PROVIDER=openai
-heroku config:set OPENAI_API_KEY=your-key-here
-
-# Deploy
-git push heroku main
+# Check system status
+curl http://localhost:8000/status
 ```
 
-### Railway
+### 2. AWS CloudWatch
 
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
+- View logs in CloudWatch Logs
+- Monitor metrics in CloudWatch Metrics
+- Set up alarms for error rates
 
-# Login and deploy
-railway login
-railway link
-railway up
-```
+### 3. Performance Monitoring
 
-### Vercel (Serverless)
+- Cache hit rates
+- Response times
+- Error rates
+- API usage
 
-```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Deploy
-vercel --prod
-```
-
----
-
-## 🔧 **Environment Configuration**
-
-### Environment Variables
-
-Create `.env` file (don't commit to git):
-
-```bash
-# LLM Configuration
-FINSIGHT_LLM_PROVIDER=ollama  # or 'openai', 'anthropic', 'regex'
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-OLLAMA_BASE_URL=http://localhost:11434
-
-# Database (optional)
-DATABASE_URL=postgresql://user:pass@localhost:5432/finai
-REDIS_URL=redis://localhost:6379
-
-# API Configuration
-API_KEY=your-secure-api-key
-DEBUG_MODE=false
-```
-
-### Rate Limiting & Security
-
-```python
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
-@app.get("/api/fact-check")
-@limiter.limit("10/minute")
-async def fact_check_endpoint(request: Request):
-    # Implementation
-    pass
-```
-
----
-
-## 💰 **Cost Comparison**
-
-### Monthly Estimates (1000 requests/day)
-
-- **Local/Docker**: $0 (hardware costs only)
-- **AWS Lambda**: $5-15/month (depending on LLM usage)
-- **Heroku**: $25-50/month
-- **AWS App Runner**: $30-80/month
-- **Railway**: $20-40/month
-- **Digital Ocean**: $25-100/month for VPS
-
-### LLM API Costs (per 1M tokens)
-
-- **OpenAI GPT-4o-mini**: $0.15 input / $0.60 output
-- **Anthropic Claude-3-Haiku**: $0.25 input / $1.25 output
-- **Ollama (self-hosted)**: $0 (hardware/compute costs only)
-
----
-
-## 📈 **Post-Deployment Checklist**
-
-### Basic Health Checks
-
-- [ ] API responds to `/health` endpoint
-- [ ] LLM provider connection working
-- [ ] Interactive docs available at `/docs`
-- [ ] Error handling working properly
-
-### Production Readiness
-
-- [ ] HTTPS/SSL configured
-- [ ] Rate limiting enabled
-- [ ] Monitoring/logging configured
-- [ ] Environment variables secured
-- [ ] Backup strategy in place
-- [ ] Custom domain configured (optional)
-
-### Performance Testing
-
-```bash
-# Basic load test
-curl -X POST "https://your-api.com/api/fact-check" \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Apple Inc. reported record revenue in Q4 2023.", "ticker": "AAPL"}'
-
-# Load testing with Apache Bench
-ab -n 100 -c 10 https://your-api.com/health
-```
-
----
-
-## 🚨 **Troubleshooting**
+## Troubleshooting
 
 ### Common Issues
 
-1. **Ollama Connection Failed**
-   - Check if Ollama service is running: `ollama serve`
-   - Verify model is downloaded: `ollama list`
-   - Check OLLAMA_BASE_URL environment variable
+1. **API Connection Issues**
+   - Check API keys
+   - Verify network connectivity
+   - Check rate limits
 
-2. **LLM API Errors**
-   - Verify API keys are set correctly
-   - Check API quotas and billing
-   - Monitor rate limits
+2. **Performance Issues**
+   - Monitor cache hit rates
+   - Check concurrent request limits
+   - Verify data source availability
 
-3. **Memory Issues**
-   - Increase Lambda memory allocation (AWS)
-   - Use lighter LLM models for resource-constrained environments
-   - Implement request caching
+3. **Deployment Failures**
+   - Check AWS credentials
+   - Verify IAM permissions
+   - Check CloudFormation logs
 
-### Debug Mode
+## Security Considerations
 
-```bash
-# Enable debug logging
-export DEBUG_MODE=true
-python finai_quality_api.py
-```
+1. **API Keys**
+   - Store securely in AWS Secrets Manager
+   - Rotate regularly
+   - Use environment-specific keys
 
----
+2. **Access Control**
+   - Use IAM roles
+   - Implement API Gateway authorizers
+   - Enable CORS appropriately
 
-## 🔗 **Related Documentation**
+3. **Data Protection**
+   - Encrypt sensitive data
+   - Use HTTPS
+   - Implement rate limiting
 
-- [AWS Deployment Guide (Ollama-Aware)](./AWS_DEPLOYMENT_OLLAMA_AWARE.md)
-- [Local LLM Setup Guide](./LOCAL_LLM_SETUP.md)
-- [Architecture Overview](./ARCHITECTURE.md)
-- [API Documentation](./README.md)
+## Scaling Considerations
 
----
+1. **Vertical Scaling**
+   - Increase Lambda memory
+   - Adjust concurrent execution limits
+   - Optimize cache settings
 
-**Need help?** Check our [troubleshooting guide](./AWS_DEPLOYMENT_OLLAMA_AWARE.md#troubleshooting) or open an issue on GitHub.
+2. **Horizontal Scaling**
+   - Use API Gateway caching
+   - Implement DynamoDB auto-scaling
+   - Use CloudFront for static content
+
+## Backup & Recovery
+
+1. **Data Backup**
+   - Regular DynamoDB backups
+   - S3 versioning
+   - CloudWatch log retention
+
+2. **Disaster Recovery**
+   - Multi-region deployment
+   - Cross-region replication
+   - Regular recovery testing
