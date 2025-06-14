@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSight - AI Quality Enhancement Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .hero-section {
+            text-align: center;
+            color: white;
+            padding: 60px 20px;
+        }
+
+        .hero-section h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto 40px;
+            opacity: 0.8;
+        }
+
+        .demo-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .demo-header h2 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .content-panel {
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .panel-header {
+            padding: 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-header.before {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            color: #2d3436;
+        }
+
+        .panel-header.after {
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+            color: white;
+        }
+
+        .panel-content {
+            padding: 20px;
+            min-height: 200px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            background: #f8f9fa;
+        }
+
+        .sample-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .sample-input {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .sample-input:hover {
+            background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .sample-input.active {
+            border-color: #1976d2;
+            background: linear-gradient(135deg, #90caf9 0%, #64b5f6 100%);
+        }
+
+        .sample-input h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sample-input p {
+            font-size: 0.9rem;
+            color: #424242;
+        }
+
+        .content-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 150px;
+            font-family: inherit;
+            margin: 15px 0;
+        }
+
+        .content-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .option-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option-card:hover {
+            border-color: #4facfe;
+            transform: translateY(-2px);
+        }
+
+        .option-card.active {
+            border-color: #4facfe;
+            background: linear-gradient(135deg, #4facfe10, #00f2fe10);
+        }
+
+        .option-card i {
+            font-size: 2rem;
+            color: #4facfe;
+            margin-bottom: 10px;
+        }
+
+        .provider-status {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .provider-status h3 {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #495057;
+        }
+
+        .provider-info {
+            display: grid;
+            gap: 15px;
+        }
+
+        .provider-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .provider-item i {
+            color: #4facfe;
+            width: 20px;
+        }
+
+        .provider-note {
+            margin-top: 15px;
+            padding: 12px;
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            color: #0c5460;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .provider-selection {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .provider-selection h3 {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #495057;
+        }
+
+        .provider-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .provider-option {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .provider-option:hover {
+            border-color: #4facfe;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.2);
+        }
+
+        .provider-option.active {
+            border-color: #4facfe;
+            background: linear-gradient(135deg, #4facfe10, #00f2fe10);
+        }
+
+        .provider-option i {
+            font-size: 2rem;
+            color: #4facfe;
+            margin-bottom: 10px;
+        }
+
+        .provider-option h4 {
+            margin-bottom: 5px;
+            color: #495057;
+        }
+
+        .provider-option p {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0;
+        }
+
+        .provider-status {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .provider-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .provider-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .quality-dashboard {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #28a745 0deg, #28a745 var(--score-angle, 0deg), #e9ecef var(--score-angle, 0deg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin: 0 auto 20px;
+        }
+
+        .score-circle::before {
+            content: '';
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .score-value {
+            position: relative;
+            z-index: 1;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric {
+            text-align: center;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4facfe;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #28a745;
+        }
+
+        .result-card.warning {
+            border-left-color: #ffc107;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1><i class="fas fa-chart-line"></i> FinSight</h1>
+        <p class="subtitle">AI Quality Enhancement Platform for Financial Content</p>
+        <p class="description">
+            Transform unreliable AI-generated financial content into trustworthy, compliant, and context-rich insights.
+        </p>
+    </div>
+
+    <div class="container">
+        <div class="demo-container">
+            <div class="demo-header">
+                <h2>Live API Demo</h2>
+                <p>Experience how FinSight transforms raw AI content into professional-grade financial insights</p>
+            </div>
+
+            <!-- Before/After Comparison -->
+            <div class="before-after">
+                <div class="content-panel">
+                    <div class="panel-header before">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Before: Raw AI Output</strong>
+                    </div>
+                    <div class="panel-content" id="before-content">
+                        Select a sample scenario below to see the transformation...
+                    </div>
+                </div>
+                <div class="content-panel">
+                    <div class="panel-header after">
+                        <i class="fas fa-check-circle"></i>
+                        <strong>After: FinSight Enhanced</strong>
+                    </div>
+                    <div class="panel-content" id="after-content">
+                        Enhanced content will appear here after analysis...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample Scenarios -->
+            <div>
+                <h3>Try these realistic scenarios:</h3>
+                <div class="sample-inputs">
+                    <div class="sample-input" onclick="loadSample('investment', this)">>
+                        <h4><i class="fas fa-chart-bar"></i> Risky Investment Advice</h4>
+                        <p>AI content with compliance violations and unverified claims</p>
+                    </div>
+                    <div class="sample-input" onclick="loadSample('market', this)">>
+                        <h4><i class="fas fa-globe"></i> Market Analysis</h4>
+                        <p>Technical content that needs context and fact verification</p>
+                    </div>
+                    <div class="sample-input" onclick="loadSample('crypto', this)">>
+                        <h4><i class="fab fa-bitcoin"></i> Crypto Discussion</h4>
+                        <p>Balanced content with good quality score</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Input -->
+            <div>
+                <h3>Or enter your own content:</h3>
+                <textarea 
+                    id="content-input" 
+                    class="content-input"
+                    placeholder="Paste any AI-generated financial content here..."
+                ></textarea>
+            </div>
+
+            <!-- Enhancement Options -->
+            <div class="options-grid">
+                <div class="option-card active" data-option="fact-check">
+                    <i class="fas fa-search"></i>
+                    <h3>Fact Checking</h3>
+                    <p>Verify claims and data</p>
+                </div>
+                <div class="option-card active" data-option="context">
+                    <i class="fas fa-plus-circle"></i>
+                    <h3>Context Enrichment</h3>
+                    <p>Add market insights</p>
+                </div>
+                <div class="option-card active" data-option="compliance">
+                    <i class="fas fa-gavel"></i>
+                    <h3>Compliance Check</h3>
+                    <p>Regulatory validation</p>
+                </div>
+            </div>
+
+            <!-- LLM Provider Selection -->
+            <div class="provider-selection">
+                <h3><i class="fas fa-brain"></i> LLM Provider Selection</h3>
+                <div class="provider-options">
+                    <div class="provider-option active" data-provider="auto">
+                        <i class="fas fa-magic"></i>
+                        <h4>Auto Select</h4>
+                        <p>Best available provider</p>
+                    </div>
+                    <div class="provider-option" data-provider="ollama">
+                        <i class="fas fa-desktop"></i>
+                        <h4>Ollama (Local)</h4>
+                        <p>Local LLM processing</p>
+                    </div>
+                    <div class="provider-option" data-provider="bedrock">
+                        <i class="fas fa-cloud"></i>
+                        <h4>AWS Bedrock</h4>
+                        <p>Claude 3 Haiku</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Provider Status -->
+            <div class="provider-status">
+                <h3><i class="fas fa-cogs"></i> AI Provider Status</h3>
+                <div class="provider-info">
+                    <div class="provider-item">
+                        <i class="fas fa-server"></i>
+                        <span>Backend: <strong>Local Development</strong></span>
+                    </div>
+                    <div class="provider-item">
+                        <i class="fas fa-brain"></i>
+                        <span>LLM Status: <strong id="llm-status">Checking...</strong></span>
+                    </div>
+                    <div class="provider-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Fallback: <strong>Regex Patterns</strong></span>
+                    </div>
+                </div>
+                <div class="provider-note" id="provider-note">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Provider will be selected automatically based on availability</span>
+                </div>
+            </div>
+
+            <!-- Analyze Button -->
+            <button id="analyze-btn" class="analyze-btn" onclick="enhanceContent()">
+                <i class="fas fa-magic"></i> Enhance Content with FinSight
+            </button>
+
+            <!-- Results Section -->
+            <div id="results-section" class="results-section" style="display: none;">
+                <!-- Quality Dashboard -->
+                <div class="quality-dashboard">
+                    <h3><i class="fas fa-tachometer-alt"></i> Quality Assessment</h3>
+                    <div class="score-circle" id="quality-circle">
+                        <div class="score-value" id="quality-score">0%</div>
+                    </div>
+                    <div>
+                        <h4>Content Quality Score</h4>
+                        <p id="quality-description">Analyzing content...</p>
+                    </div>
+                    
+                    <div class="performance-metrics">
+                        <div class="metric">
+                            <div class="metric-value" id="processing-time">--</div>
+                            <div class="metric-label">Processing Time (ms)</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="fact-checks-count">--</div>
+                            <div class="metric-label">Claims Verified</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="context-count">--</div>
+                            <div class="metric-label">Context Added</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="compliance-count">--</div>
+                            <div class="metric-label">Compliance Issues</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Results -->
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h3><i class="fas fa-search"></i> Fact Check Results</h3>
+                        <div id="fact-checks-results">No fact checks performed</div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <h3><i class="fas fa-gavel"></i> Compliance Analysis</h3>
+                        <div id="compliance-results">No compliance issues detected</div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <h3><i class="fas fa-plus-circle"></i> Context Enrichment</h3>
+                        <div id="context-results">No additional context added</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2024 FinSight - Transforming AI-Generated Financial Content</p>
+        <p>Built with AWS Lambda, DynamoDB, and modern web technologies</p>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+
+        const sampleScenarios = {
+            investment: {
+                title: "Risky Investment Advice",
+                content: `AAPL stock is currently trading at $150 and I recommend buying it immediately. This is a guaranteed profitable investment that will definitely make you money. 
+
+Based on my analysis, Apple stock will increase by 50% in the next month. You should invest all your savings into AAPL right now for maximum returns.
+
+Trust me, this is insider information and you can't lose money on this trade. Apple is going to announce revolutionary products that will skyrocket the stock price.`,
+                issues: "Contains compliance violations, unverified claims, and lacks proper disclaimers"
+            },
+            market: {
+                title: "Market Analysis",
+                content: `The S&P 500 has shown strong performance this quarter, with technology stocks leading the gains. Market volatility remains elevated due to ongoing economic uncertainties.
+
+Current market indicators suggest a bullish trend, with the VIX trading below 20. Institutional investors are showing increased confidence in large-cap technology stocks.
+
+Economic data releases this week will likely impact market direction, particularly the employment figures and inflation data.`,
+                issues: "Factual content that needs verification and additional context"
+            },
+            crypto: {
+                title: "Crypto Discussion",
+                content: `Cryptocurrency markets continue to evolve with increasing institutional adoption. Bitcoin and Ethereum remain the dominant digital assets by market capitalization.
+
+Regulatory clarity in major markets will likely influence crypto adoption rates. Investors should carefully consider the risks associated with digital asset investments.
+
+Diversification across different asset classes remains important for portfolio management. Consider consulting with a financial advisor before making investment decisions.`,
+                issues: "Well-balanced content with appropriate disclaimers"
+            }
+        };
+
+        // Option card click handlers
+        document.querySelectorAll('.option-card').forEach(card => {
+            card.addEventListener('click', () => {
+                card.classList.toggle('active');
+            });
+        });
+
+        // Provider selection handlers
+        document.querySelectorAll('.provider-option').forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove active class from all provider options
+                document.querySelectorAll('.provider-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                // Add active class to clicked option
+                option.classList.add('active');
+                
+                // Update provider note
+                const provider = option.dataset.provider;
+                const providerNote = document.getElementById('provider-note');
+                const providerIcon = providerNote.querySelector('i');
+                const providerText = providerNote.querySelector('span');
+                
+                switch(provider) {
+                    case 'auto':
+                        providerIcon.className = 'fas fa-magic';
+                        providerText.textContent = 'Provider will be selected automatically based on availability';
+                        break;
+                    case 'ollama':
+                        providerIcon.className = 'fas fa-desktop';
+                        providerText.textContent = 'Will use local Ollama LLM if available, otherwise fallback to regex patterns';
+                        break;
+                    case 'bedrock':
+                        providerIcon.className = 'fas fa-cloud';
+                        providerText.textContent = 'Will use AWS Bedrock Claude 3 Haiku if available, otherwise fallback to regex patterns';
+                        break;
+                }
+            });
+        });
+
+        function loadSample(type, element) {
+            // Update active sample
+            document.querySelectorAll('.sample-input').forEach(input => {
+                input.classList.remove('active');
+            });
+            if (element) {
+                element.classList.add('active');
+            }
+
+            const scenario = sampleScenarios[type];
+            document.getElementById('content-input').value = scenario.content;
+            document.getElementById('before-content').textContent = scenario.content;
+            document.getElementById('after-content').textContent = 'Enhanced content will appear here after analysis...';
+            
+            // Hide results if showing
+            document.getElementById('results-section').style.display = 'none';
+        }
+
+        async function enhanceContent() {
+            const content = document.getElementById('content-input').value.trim();
+            if (!content) {
+                alert('Please enter some financial content to enhance or select a sample scenario');
+                return;
+            }
+
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const originalText = analyzeBtn.innerHTML;
+            
+            // Show loading state
+            analyzeBtn.innerHTML = '<div class="loading-spinner"></div>Enhancing Content...';
+            analyzeBtn.disabled = true;
+
+            // Update before content
+            document.getElementById('before-content').textContent = content;
+
+            // Get selected options
+            const factCheck = document.querySelector('[data-option="fact-check"]').classList.contains('active');
+            const context = document.querySelector('[data-option="context"]').classList.contains('active');
+            const compliance = document.querySelector('[data-option="compliance"]').classList.contains('active');
+            
+            // Get selected LLM provider
+            const selectedProvider = document.querySelector('.provider-option.active').dataset.provider;
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/enhance`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ai_response: {
+                            content: content,
+                            agent_id: 'frontend_demo',
+                            timestamp: new Date().toISOString()
+                        },
+                        enrichment_level: 'comprehensive',
+                        fact_check: factCheck,
+                        add_context: context,
+                        llm_provider: selectedProvider
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const processingTime = Date.now() - startTime;
+
+                // Update the UI with results
+                displayResults(result, processingTime);
+
+            } catch (error) {
+                console.error('Error enhancing content:', error);
+                document.getElementById('after-content').innerHTML = 
+                    `<div style="color: #dc3545; padding: 20px; text-align: center;">
+                        <i class="fas fa-exclamation-triangle"></i><br>
+                        <strong>Connection Error</strong><br>
+                        Unable to connect to the FinSight API. Please make sure the server is running.
+                        <br><br>
+                        <small>Error: ${error.message}</small>
+                    </div>`;
+            } finally {
+                // Reset button
+                analyzeBtn.innerHTML = originalText;
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function displayResults(result, processingTime) {
+            // Update enhanced content
+            document.getElementById('after-content').textContent = result.enhanced_content || result.original_content;
+
+            // Show results section
+            document.getElementById('results-section').style.display = 'block';
+            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+
+            // Update quality score - convert to percentage for display
+            const qualityScoreRaw = result.quality_score || 0.75;
+            const qualityScore = Math.round(qualityScoreRaw * 100);
+            
+            document.getElementById('quality-score').textContent = `${qualityScore}%`;
+            
+            // Update score circle
+            const circleElement = document.getElementById('quality-circle');
+            const angle = (qualityScore / 100) * 360;
+            circleElement.style.setProperty('--score-angle', `${angle}deg`);
+            
+            // Set description based on score
+            const descriptionElement = document.getElementById('quality-description');
+            if (qualityScore < 60) {
+                descriptionElement.textContent = 'Content needs significant improvement';
+            } else if (qualityScore < 80) {
+                descriptionElement.textContent = 'Good content with minor issues';
+            } else {
+                descriptionElement.textContent = 'Excellent content quality';
+            }
+
+            // Update performance metrics
+            document.getElementById('processing-time').textContent = Math.round(processingTime || 0);
+            document.getElementById('fact-checks-count').textContent = (result.fact_checks || []).length;
+            document.getElementById('context-count').textContent = (result.context_additions || []).length;
+            document.getElementById('compliance-count').textContent = (result.compliance_flags || []).length;
+
+            // Update provider status after processing
+            if (result.provider_used) {
+                const providerNote = document.getElementById('provider-note');
+                const providerIcon = providerNote.querySelector('i');
+                const providerText = providerNote.querySelector('span');
+                
+                if (result.provider_used === 'bedrock_llm') {
+                    providerIcon.className = 'fas fa-cloud';
+                    providerText.textContent = 'Processed using AWS Bedrock LLM (Claude 3 Haiku)';
+                    providerNote.style.background = '#d1ecf1';
+                    providerNote.style.borderColor = '#bee5eb';
+                    providerNote.style.color = '#0c5460';
+                } else if (result.provider_used === 'ollama_llm') {
+                    providerIcon.className = 'fas fa-desktop';
+                    providerText.textContent = 'Processed using local Ollama LLM';
+                    providerNote.style.background = '#d4edda';
+                    providerNote.style.borderColor = '#c3e6cb';
+                    providerNote.style.color = '#155724';
+                } else if (result.provider_used === 'regex_fallback') {
+                    providerIcon.className = 'fas fa-code';
+                    providerText.textContent = 'Processed using regex fallback patterns';
+                    providerNote.style.background = '#fff3cd';
+                    providerNote.style.borderColor = '#ffeaa7';
+                    providerNote.style.color = '#856404';
+                }
+            }
+
+            // Update detailed results
+            updateFactChecks(result.fact_checks || []);
+            updateCompliance(result.compliance_flags || []);
+            updateContext(result.context_additions || []);
+        }
+
+        function updateFactChecks(factChecks) {
+            const container = document.getElementById('fact-checks-results');
+            if (factChecks.length === 0) {
+                container.innerHTML = '<p>No fact checks performed</p>';
+                return;
+            }
+
+            container.innerHTML = factChecks.map(fc => `
+                <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid ${fc.verified ? '#28a745' : '#ffc107'};">
+                    <strong>${fc.claim}</strong><br>
+                    <small>Confidence: ${Math.round((fc.confidence || 0) * 100)}% | ${fc.explanation || 'No explanation'}</small>
+                </div>
+            `).join('');
+        }
+
+        function updateCompliance(flags) {
+            const container = document.getElementById('compliance-results');
+            if (flags.length === 0) {
+                container.innerHTML = '<p><i class="fas fa-check-circle"></i> No compliance issues detected</p>';
+                return;
+            }
+
+            container.innerHTML = flags.map(flag => `
+                <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #dc3545;">
+                    <strong><i class="fas fa-exclamation-triangle"></i> ${flag}</strong>
+                </div>
+            `).join('');
+        }
+
+        function updateContext(contextAdditions) {
+            const container = document.getElementById('context-results');
+            if (contextAdditions.length === 0) {
+                container.innerHTML = '<p>No additional context added</p>';
+                return;
+            }
+
+            container.innerHTML = contextAdditions.map(ctx => `
+                <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #28a745;">
+                    <strong>${ctx.type}</strong><br>
+                    <small>${ctx.content}</small>
+                </div>
+            `).join('');
+        }
+
+        // Update provider status on page load
+        async function updateProviderStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    const health = await response.json();
+                    
+                    // Update LLM status display based on available providers
+                    let statusText = 'Unavailable (Fallback Active)';
+                    if (health.providers) {
+                        const availableProviders = Object.entries(health.providers)
+                            .filter(([key, value]) => value.status === 'available')
+                            .map(([key, value]) => key);
+                        
+                        if (availableProviders.length > 0) {
+                            statusText = `Available (${availableProviders.join(', ')})`;
+                        }
+                    }
+                    document.getElementById('llm-status').textContent = statusText;
+                    
+                    // Update provider availability indicators
+                    if (health.providers) {
+                        const ollamaOption = document.querySelector('[data-provider="ollama"]');
+                        const bedrockOption = document.querySelector('[data-provider="bedrock"]');
+                        
+                        if (health.providers.ollama && health.providers.ollama.status === 'unavailable' && ollamaOption) {
+                            ollamaOption.style.opacity = '0.6';
+                            ollamaOption.title = 'Ollama is not available';
+                        } else if (ollamaOption) {
+                            ollamaOption.style.opacity = '1';
+                            ollamaOption.title = health.providers.ollama?.model || 'Ollama local LLM';
+                        }
+                        
+                        if (health.providers.bedrock && health.providers.bedrock.status === 'unavailable' && bedrockOption) {
+                            bedrockOption.style.opacity = '0.6';
+                            bedrockOption.title = 'AWS Bedrock is not available';
+                        } else if (bedrockOption) {
+                            bedrockOption.style.opacity = '1';
+                            bedrockOption.title = health.providers.bedrock?.model || 'AWS Bedrock Claude 3 Haiku';
+                        }
+                    }
+                } else {
+                    document.getElementById('llm-status').textContent = 'Connection Error';
+                }
+            } catch (error) {
+                console.error('Failed to fetch provider status:', error);
+                document.getElementById('llm-status').textContent = 'Connection Error';
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            // Load first sample and mark it as active
+            const firstSample = document.querySelector('.sample-input');
+            loadSample('investment', firstSample);
+            updateProviderStatus();
+            
+            // Add provider selection event handlers
+            document.querySelectorAll('.provider-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    // Remove active class from all options
+                    document.querySelectorAll('.provider-option').forEach(opt => opt.classList.remove('active'));
+                    // Add active class to clicked option
+                    option.classList.add('active');
+                    
+                    // Update provider note
+                    const selectedProvider = option.dataset.provider;
+                    const providerNote = document.getElementById('provider-note');
+                    const providerIcon = providerNote.querySelector('i');
+                    const providerText = providerNote.querySelector('span');
+                    
+                    switch(selectedProvider) {
+                        case 'auto':
+                            providerIcon.className = 'fas fa-magic';
+                            providerText.textContent = 'Provider will be selected automatically based on availability';
+                            break;
+                        case 'ollama':
+                            providerIcon.className = 'fas fa-desktop';
+                            providerText.textContent = 'Will use local Ollama LLM for processing';
+                            break;
+                        case 'bedrock':
+                            providerIcon.className = 'fas fa-cloud';
+                            providerText.textContent = 'Will use AWS Bedrock Claude 3 Haiku for processing';
+                            break;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
