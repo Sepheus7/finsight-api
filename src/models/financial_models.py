@@ -17,9 +17,14 @@ class ClaimType(Enum):
     INTEREST_RATE = "interest_rate"
     INFLATION = "inflation"
     ECONOMIC_INDICATOR = "economic_indicator"
+    MARKET_PERFORMANCE = "market_performance"
+    COMPANY_FUNDAMENTAL = "company_fundamental"
+    SECTOR_PERFORMANCE = "sector_performance"
+    COMPANY_MENTION = "company_mention"
     OPINION = "opinion"
     PREDICTION = "prediction"
     HISTORICAL = "historical"
+    UNKNOWN = "unknown"
 
 
 class RiskLevel(Enum):

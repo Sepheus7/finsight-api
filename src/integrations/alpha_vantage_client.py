@@ -56,7 +56,7 @@ class AlphaVantageDataSource(DataSource):
     
     BASE_URL = "https://www.alphavantage.co/query"
     
-    def __init__(self, api_key: Optional[str] = None, config: Dict[str, Any] = None):
+    def __init__(self, api_key: Optional[str] = None, config: Optional[Dict[str, Any]] = None):
         # Initialize metadata
         metadata = DataSourceMetadata(
             name="alpha_vantage",
@@ -70,7 +70,7 @@ class AlphaVantageDataSource(DataSource):
             documentation_url="https://www.alphavantage.co/documentation/"
         )
         
-        super().__init__(metadata, config)
+        super().__init__(metadata, config or {})
         
         # API configuration
         self.api_key = api_key or os.getenv('ALPHA_VANTAGE_API_KEY')
@@ -116,14 +116,17 @@ class AlphaVantageDataSource(DataSource):
             )
         
         try:
-            if query.query_type == "stock_price":
-                data = await self._get_stock_quote(query.parameters.get("symbol"))
+            symbol = query.parameters.get("symbol")
+            if not isinstance(symbol, str):
+                data = None
+            elif query.query_type == "stock_price":
+                data = await self._get_stock_quote(symbol)
             elif query.query_type == "company_overview":
-                data = await self._get_company_overview(query.parameters.get("symbol"))
+                data = await self._get_company_overview(symbol)
             elif query.query_type == "market_cap":
                 # Get market cap from company overview
-                overview = await self._get_company_overview(query.parameters.get("symbol"))
-                data = {"market_cap": overview.market_cap} if overview else None
+                overview = await self._get_company_overview(symbol)
+                data = {"market_cap": overview.get("market_cap")} if overview else None
             else:
                 data = None
             

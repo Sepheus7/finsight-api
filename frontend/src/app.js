@@ -65,10 +65,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize
     init();
 
-    function init() {
+    async function init() {
         console.log('Initializing app...');
         setupEventListeners();
         updateApiEndpoint();
+        
+        // Load configuration from backend
+        try {
+            await api.loadConfig();
+            console.log('Configuration loaded successfully');
+        } catch (error) {
+            console.warn('Failed to load configuration:', error);
+        }
+        
         checkApiHealth();
         updateConfidenceValue();
         console.log('App initialized successfully');

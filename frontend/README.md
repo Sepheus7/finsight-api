@@ -1,87 +1,107 @@
-# FinSight Frontend
+# FinSight Frontend - Unified Interface
 
-A modern, responsive web interface for testing and interacting with the FinSight Financial Data Enrichment API.
+This directory contains the unified FinSight frontend interface that consolidates all the different components into a single, cohesive application.
 
-## Features
+## New Unified Structure
 
-- 🎯 **API Testing Interface** - Test API endpoints with real-time feedback
-- 🔄 **Environment Switching** - Easily switch between local, dev, and prod environments
-- 📊 **Response Visualization** - Clear display of API responses and performance metrics
-- ⚡ **Real-time Updates** - Instant feedback on API calls and response times
+### Main Interface (`main.html`)
 
-## Quick Start
+The new unified interface provides seamless navigation between all FinSight features:
 
-1. **Start the API Server**
+- **Home Page**: Overview and feature navigation
+- **AI Chat**: Intelligent financial assistant powered by Bedrock Router Agent
+- **RAG Platform**: Retrieval-Augmented Generation for financial research
+- **Analysis Tools**: Financial enrichment, fact-checking, and compliance tools
+
+### Key Features
+
+1. **Bedrock Router Agent Integration**: The chat interface now uses the new Bedrock function calling system for more intelligent and accurate responses.
+
+2. **Unified Navigation**: Single-page application with smooth transitions between different tools.
+
+3. **Real-time API Status**: Live monitoring of backend service health.
+
+4. **Responsive Design**: Works seamlessly on desktop and mobile devices.
+
+## Files Overview
+
+### Core Files
+
+- `main.html` - New unified interface (main entry point)
+- `api.js` - Updated API client with router agent support
+- `styles.css` - Enhanced styles with router agent message styling
+
+### Legacy Files (Still Used)
+
+- `chat.html` - Chat interface (embedded in main.html)
+- `index-rag.html` - RAG platform (embedded in main.html)
+- `index.html` - Analysis tools (embedded in main.html)
+- `chat-app.js` - Chat functionality with router agent integration
+- `rag-app.js` - RAG platform functionality
+- `app.js` - Analysis tools functionality
+
+### Removed/Deprecated
+
+- `performance-demo.html` - No longer needed (functionality integrated)
+- `demo-fixed.html` - Replaced by unified interface
+
+## Usage
+
+1. **Start the Backend Server**:
+
    ```bash
-   # From the project root
-   python api_server.py
+   cd /path/to/FinSight
+   python src/api_server.py
    ```
 
-2. **Open the Frontend**
-   - Open `frontend/src/index.html` in your browser
-   - Or serve it using a local web server:
-     ```bash
-     # Using Python's built-in server
-     cd frontend/src
-     python -m http.server 8080
-     ```
-     Then visit `http://localhost:8080`
+2. **Access the Interface**:
+   Open <http://localhost:8000> in your browser
 
-## Configuration
+3. **Navigate Between Features**:
+   - Use the top navigation bar to switch between different tools
+   - Click on feature cards on the home page for quick access
+   - All features are now integrated in a single interface
 
-The frontend automatically configures itself based on the selected environment:
+## API Integration
 
-- **Local**: `http://localhost:8000`
-- **Development**: `https://dev-api.finsight.example.com`
-- **Production**: `https://api.finsight.example.com`
+The frontend now integrates with the new Bedrock Router Agent through the `/route-query` endpoint:
 
-To update these endpoints, modify the environment configuration in `app.js`.
+```javascript
+// Example usage
+const api = new FinSightAPI();
+const response = await api.routeQuery("What is Apple's stock price?", {
+    use_function_calling: true
+});
+```
+
+## Router Agent Features
+
+The new chat interface includes:
+
+- **Function Calling**: Automatic tool selection and execution
+- **Real-time Data**: Live stock prices, company information, and economic indicators
+- **Web Search**: Intelligent web search for additional context
+- **Metadata Display**: Detailed information about AI processing and tool usage
+- **Error Handling**: Graceful fallbacks and error reporting
 
 ## Development
 
-### Project Structure
+To modify the interface:
 
-```
-frontend/
-├── src/
-│   ├── index.html    # Main HTML file
-│   ├── app.js        # Application logic
-│   └── styles.css    # Custom styles
-└── README.md         # This file
-```
+1. **Main Layout**: Edit `main.html` for navigation and overall structure
+2. **Chat Features**: Modify `chat-app.js` for chat functionality
+3. **Styling**: Update `styles.css` for visual changes
+4. **API Integration**: Modify `api.js` for backend communication
 
-### Customization
+The interface automatically loads and initializes the appropriate JavaScript modules when navigating between different sections.
 
-- **Styling**: Modify `styles.css` to change the appearance
-- **Behavior**: Update `app.js` to modify functionality
-- **Layout**: Edit `index.html` to change the structure
+## Browser Support
 
-## API Testing
-
-The frontend supports testing the following API endpoints:
-
-1. **Enrichment Endpoint**
-   ```json
-   POST /enrich
-   {
-     "content": "Apple (AAPL) stock is trading at $195",
-     "enrichment_types": ["stock_data", "market_context"],
-     "format_style": "enhanced"
-   }
-   ```
-
-2. **Health Check**
-   ```
-   GET /health
-   ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
 
 ## License
 
-MIT License - See LICENSE file for details 
+MIT License - See LICENSE file for details

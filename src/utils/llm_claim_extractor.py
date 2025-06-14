@@ -237,6 +237,8 @@ class LLMClaimExtractor:
                 )
                 if response.status_code == 200:
                     return self._parse_llm_response(response.json()["response"], text)
+                else:
+                    return self._extract_with_regex(text)
             elif self.provider == "openai" and openai is not None and isinstance(self.client, openai.OpenAI):
                 response = self.client.chat.completions.create(
                     model="gpt-4",
@@ -249,6 +251,8 @@ class LLMClaimExtractor:
                 content = response.choices[0].message.content
                 if content:
                     return self._parse_llm_response(content, text)
+                else:
+                    return self._extract_with_regex(text)
             elif self.provider == "anthropic" and anthropic is not None and isinstance(self.client, anthropic.Anthropic):
                 response = self.client.messages.create(
                     model="claude-3-opus-20240229",
@@ -264,10 +268,14 @@ class LLMClaimExtractor:
                     for content_block in response.content:
                         if hasattr(content_block, 'text'):
                             return self._parse_llm_response(getattr(content_block, 'text'), text)
+                    # If no text content found, fallback to regex
+                    return self._extract_with_regex(text)
+                else:
+                    return self._extract_with_regex(text)
             
             # Fallback to regex if LLM fails or is not configured
-                logger.warning(f"LLM provider {self.provider} not properly configured, falling back to regex")
-                return self._extract_with_regex(text)
+            logger.warning(f"LLM provider {self.provider} not properly configured, falling back to regex")
+            return self._extract_with_regex(text)
             
         except Exception as e:
             logger.error(f"LLM extraction failed: {e}")
@@ -275,20 +283,22 @@ class LLMClaimExtractor:
 
     def _get_extraction_prompt(self, text: str) -> str:
         """Get the prompt for claim extraction"""
-        return f"""Extract all financial claims from the following text. For each claim, identify:
+        return f"""Extract all financial claims and company mentions from the following text. For each claim, identify:
 1. The type of claim (stock price, market performance, economic indicator, etc.)
-2. The specific stock symbol or indicator if mentioned
+2. The specific stock symbol or company name mentioned
 3. The confidence level (0.0 to 1.0) in the extraction
 4. The exact text of the claim
+
+Important: Extract company names even from questions like "What's Apple's stock price?" or "How is Microsoft performing?"
 
 Text: {text}
 
 Format the response as a JSON array of objects with the following structure:
 [
   {{
-    "text": "exact claim text",
-    "claim_type": "stock_price|market_performance|economic_indicator|company_fundamental|sector_performance|unknown",
-    "symbol": "stock symbol if applicable",
+    "text": "exact claim text or company mention",
+    "claim_type": "stock_price|market_performance|economic_indicator|company_fundamental|sector_performance|company_mention|unknown",
+    "symbol": "stock symbol or company name if applicable",
     "confidence": 0.0 to 1.0
   }}
 ]"""
@@ -331,6 +341,40 @@ Format the response as a JSON array of objects with the following structure:
     def _extract_with_regex(self, text: str) -> List[FinancialClaim]:
         """Fallback regex-based claim extraction"""
         claims = []
+        
+        # Direct stock symbols (AAPL, MSFT, etc.)
+        symbol_pattern = r'\b([A-Z]{2,5})\b'
+        for match in re.finditer(symbol_pattern, text):
+            symbol = match.group(1)
+            # Only include if it looks like a stock symbol
+            if len(symbol) <= 5 and symbol in ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NFLX', 'NVDA', 'AMD', 'INTC', 'ORCL', 'CRM', 'JPM', 'BAC', 'WFC', 'GS', 'MS', 'C', 'AXP', 'V', 'MA']:
+                claims.append(FinancialClaim(
+                    text=match.group(0),
+                    claim_type=ClaimType.STOCK_PRICE,
+                    entities=[symbol],
+                    values=[],
+                    confidence=0.9,
+                    source_text=text
+                ))
+        
+        # Company names in questions
+        company_patterns = [
+            r'\b(Apple|Microsoft|Google|Amazon|Tesla|Meta|Facebook|Netflix|Nvidia|AMD|Intel|Oracle|Salesforce)\b',
+            r'\b(JPMorgan|Bank of America|Wells Fargo|Goldman Sachs|Morgan Stanley|Citigroup|American Express|Visa|Mastercard)\b',
+            r'\b(Johnson & Johnson|Pfizer|Merck|AbbVie|Bristol Myers|UnitedHealth|Eli Lilly)\b'
+        ]
+        
+        for pattern in company_patterns:
+            for match in re.finditer(pattern, text, re.IGNORECASE):
+                company = match.group(1)
+                claims.append(FinancialClaim(
+                    text=f"{company} stock",
+                    claim_type=ClaimType.STOCK_PRICE,
+                    entities=[company],
+                    values=[],
+                    confidence=0.8,
+                    source_text=text
+                ))
         
         # Stock price patterns
         stock_pattern = r'\b([A-Z]{1,5})\s*(?:stock|shares?)?\s*(?:is|are|trading|at|currently)?\s*\$?\s*(\d+(?:\.\d+)?)'

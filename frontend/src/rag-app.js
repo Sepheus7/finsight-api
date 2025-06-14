@@ -170,7 +170,23 @@ Examples:
 Examples:
 • You should definitely buy Apple stock now!
 • This investment has zero risk and guaranteed returns
-• Don't miss out on this once-in-a-lifetime opportunity`
+• Don't miss out on this once-in-a-lifetime opportunity`,
+            
+            rag: `Ask any financial question and get real-time data-enhanced responses...
+
+Examples:
+• What is Apple's current stock price?
+• How is Microsoft performing today?
+• Compare Apple and Tesla stock performance
+• What's the market sentiment for tech stocks?`,
+            
+            'rag-smart': `Ask complex financial questions with AI-powered orchestration...
+
+Examples:
+• What is Tencent's current stock price?
+• How are ASML and Taiwan Semiconductor performing?
+• Compare Alibaba and JD.com performance
+• What about Shopify's recent performance?`
         };
 
         queryInput.placeholder = placeholders[this.currentMode] || placeholders.enrichment;
@@ -199,29 +215,28 @@ Examples:
                 timestamp: new Date().toISOString()
             };
 
-            // Add mode-specific parameters
+            // Choose endpoint based on mode
             if (this.currentMode === 'enrichment') {
-                requestData.enrichment_types = ['stock_data', 'market_context'];
-                requestData.format_style = 'enhanced';
-                requestData.include_compliance = document.getElementById('includeContext')?.checked || false;
-                response = await this.callAPI('/enrich', requestData);
+                response = await this.callAPI('/enrichment', requestData);
             } else if (this.currentMode === 'factcheck') {
-                requestData.use_llm = true;
-                requestData.include_context = document.getElementById('includeContext')?.checked || true;
-                requestData.confidence_threshold = 0.8;
                 response = await this.callAPI('/fact-check', requestData);
             } else if (this.currentMode === 'compliance') {
-                requestData.check_types = ['investment_advice', 'guarantees', 'disclaimers'];
                 response = await this.callAPI('/compliance', requestData);
+            } else if (this.currentMode === 'rag') {
+                // Use RAG endpoint with different request format
+                response = await this.callAPI('/rag', { query: query });
+            } else if (this.currentMode === 'rag-smart') {
+                // Use smart RAG endpoint with Bedrock orchestration
+                response = await this.callAPI('/rag-smart', { query: query });
             }
 
             const processingTime = Date.now() - startTime;
-            this.updateStats(processingTime);
             this.displayResults(response, processingTime);
-            
+            this.updateStats(processingTime);
+
         } catch (error) {
             console.error('Query execution failed:', error);
-            this.showError('Query execution failed. Please try again.');
+            this.showError(`Query failed: ${error.message}`);
         } finally {
             this.setLoading(false);
         }
@@ -292,6 +307,10 @@ Examples:
             html = this.renderFactCheckResults(data);
         } else if (this.currentMode === 'compliance') {
             html = this.renderComplianceResults(data);
+        } else if (this.currentMode === 'rag') {
+            html = this.renderRAGResults(data);
+        } else if (this.currentMode === 'rag-smart') {
+            html = this.renderRAGResults(data);
         }
 
         container.innerHTML = html;
@@ -407,6 +426,88 @@ Examples:
 
         html += '</div>';
         return html;
+    }
+
+    renderRAGResults(data) {
+        let html = '<div class="rag-results">';
+        
+        // Plain English Response
+        if (data.response) {
+            html += `
+                <div class="result-section">
+                    <h4><i class="fas fa-comment-alt"></i> Response</h4>
+                    <div class="rag-response">${data.response.replace(/\n/g, '<br>')}</div>
+                </div>
+            `;
+        }
+        
+        // Financial Data
+        if (data.financial_data && data.financial_data.stocks && Object.keys(data.financial_data.stocks).length > 0) {
+            html += `
+                <div class="result-section">
+                    <h4><i class="fas fa-chart-line"></i> Stock Data</h4>
+                    <div class="stock-data-grid">
+            `;
+            
+            Object.values(data.financial_data.stocks).forEach(stock => {
+                html += this.renderStockCard(stock);
+            });
+            
+            html += '</div></div>';
+        }
+        
+        // Market Insights
+        if (data.market_insights && data.market_insights.length > 0) {
+            html += `
+                <div class="result-section">
+                    <h4><i class="fas fa-lightbulb"></i> Market Insights</h4>
+                    <div class="insights-list">
+            `;
+            
+            data.market_insights.forEach(insight => {
+                html += `<div class="insight-item"><i class="fas fa-arrow-right"></i> ${insight}</div>`;
+            });
+            
+            html += '</div></div>';
+        }
+        
+        // Sources
+        if (data.sources && data.sources.length > 0) {
+            html += `
+                <div class="result-section">
+                    <h4><i class="fas fa-link"></i> Sources</h4>
+                    <div class="sources-list">
+            `;
+            
+            data.sources.forEach(source => {
+                html += `<div class="source-item"><i class="fas fa-external-link-alt"></i> ${source}</div>`;
+            });
+            
+            html += '</div></div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+    
+    renderStockCard(stock) {
+        const changeClass = stock.change_percent > 0 ? 'positive' : stock.change_percent < 0 ? 'negative' : 'neutral';
+        const changeIcon = stock.change_percent > 0 ? 'fa-arrow-up' : stock.change_percent < 0 ? 'fa-arrow-down' : 'fa-minus';
+        
+        return `
+            <div class="stock-card">
+                <div class="stock-header">
+                    <h5>${stock.symbol}</h5>
+                    <span class="stock-price">$${stock.price.toFixed(2)}</span>
+                </div>
+                <div class="stock-change ${changeClass}">
+                    <i class="fas ${changeIcon}"></i>
+                    ${stock.change > 0 ? '+' : ''}${stock.change.toFixed(2)} (${stock.change_percent > 0 ? '+' : ''}${stock.change_percent.toFixed(2)}%)
+                </div>
+                ${stock.volume ? `<div class="stock-volume">Volume: ${this.formatNumber(stock.volume)}</div>` : ''}
+                ${stock.day_range ? `<div class="stock-range">Range: ${stock.day_range}</div>` : ''}
+            </div>
+        `;
     }
 
     renderDataPoint(point) {

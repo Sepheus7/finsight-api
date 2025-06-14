@@ -410,6 +410,175 @@
             .query-options { flex-direction: column; gap: 0.75rem; }
             .query-actions { flex-direction: column; align-items: stretch; }
         }
+        
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link.primary {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .nav-link.primary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* RAG-specific styles */
+        .rag-response {
+            background: var(--gray-50);
+            border-left: 4px solid var(--primary-600);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--gray-800);
+        }
+        
+        .stock-data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        
+        .stock-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+        
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .stock-header h5 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        
+        .stock-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        
+        .stock-change {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stock-change.positive {
+            color: var(--success-600);
+        }
+        
+        .stock-change.negative {
+            color: #dc2626;
+        }
+        
+        .stock-change.neutral {
+            color: var(--gray-600);
+        }
+        
+        .stock-volume, .stock-range {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: 0.25rem;
+        }
+        
+        .insights-list {
+            background: var(--gray-50);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+        
+        .insight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        .insight-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .insight-item i {
+            color: var(--primary-600);
+            margin-top: 0.125rem;
+            flex-shrink: 0;
+        }
+        
+        .sources-list {
+            background: var(--gray-50);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+        
+        .source-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--gray-700);
+        }
+        
+        .source-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .source-item i {
+            color: var(--primary-600);
+            flex-shrink: 0;
+        }
+        
+        .result-section {
+            margin-bottom: 2rem;
+        }
+        
+        .result-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .result-section h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+        }
+        
+        .result-section h4 i {
+            color: var(--primary-600);
+        }
     </style>
 </head>
 <body>
@@ -431,6 +600,13 @@
                 <div class="status-indicator" id="systemStatus">
                     <div class="status-dot"></div>
                     <span class="status-text">System Online</span>
+                </div>
+                
+                <div class="nav-links">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/static/performance-demo.html" class="nav-link primary">
+                        <i class="fas fa-chart-line"></i> Performance Demo
+                    </a>
                 </div>
             </div>
         </header>
@@ -475,7 +651,11 @@
                     <div class="query-header">
                         <h3>Financial Intelligence Query</h3>
                         <div class="query-modes">
-                            <button class="mode-btn active" data-mode="enrichment">
+                            <button class="mode-btn active" data-mode="rag">
+                                <i class="fas fa-robot"></i>
+                                Smart RAG
+                            </button>
+                            <button class="mode-btn" data-mode="enrichment">
                                 <i class="fas fa-chart-bar"></i>
                                 Enrichment
                             </button>
@@ -494,9 +674,16 @@
                         <textarea 
                             id="queryInput" 
                             class="query-input" 
-                            placeholder="Enter your financial query or content to analyze..."
+                            placeholder="Ask complex financial questions with AI-powered orchestration...
+
+Examples:
+• What is Tencent's current stock price?
+• How are ASML and Taiwan Semiconductor performing?
+• Compare Alibaba and JD.com performance
+• What about Shopify's recent performance?
+• What are the current economic indicators?"
                             rows="6"
-                        >Apple (AAPL) stock is trading at $195, up 2.3% today. Tesla (TSLA) is also performing well with strong Q3 earnings.</textarea>
+                        >What is Apple's current stock price and how is it performing today?</textarea>
                         
                         <div class="query-actions">
                             <div class="query-options">
@@ -552,14 +739,14 @@
                             <p>Enter a financial query above to get started with real-time data analysis</p>
                             <div class="example-queries">
                                 <h5>Try these examples:</h5>
-                                <button class="example-btn" data-query="What is Apple's current stock price and recent performance?">
-                                    Apple stock analysis
+                                <button class="example-btn" data-query="What is Apple's current stock price?">
+                                    Apple stock price
                                 </button>
-                                <button class="example-btn" data-query="Fact-check: Tesla stock is guaranteed to double by next year">
-                                    Tesla fact-check
+                                <button class="example-btn" data-query="How is Microsoft performing today?">
+                                    Microsoft performance
                                 </button>
-                                <button class="example-btn" data-query="Check this content for compliance: You should definitely buy Bitcoin now!">
-                                    Compliance check
+                                <button class="example-btn" data-query="Compare Apple and Tesla stock performance">
+                                    Compare stocks
                                 </button>
                             </div>
                         </div>
@@ -588,7 +775,7 @@
         class FinSightRAG {
             constructor() {
                 this.apiBaseUrl = 'http://localhost:8000';
-                this.currentMode = 'enrichment';
+                this.currentMode = 'rag';
                 this.isLoading = false;
                 this.stats = { apiCallsToday: 0, avgResponseTime: 0, totalQueries: 0 };
                 this.init();
@@ -654,7 +841,9 @@
                     let response;
                     const requestData = { content: query, timestamp: new Date().toISOString() };
 
-                    if (this.currentMode === 'enrichment') {
+                    if (this.currentMode === 'rag') {
+                        response = await this.callAPI('/rag', { query: query });
+                    } else if (this.currentMode === 'enrichment') {
                         requestData.enrichment_types = ['stock_data', 'market_context'];
                         requestData.format_style = 'enhanced';
                         response = await this.callAPI('/enrich', requestData);
@@ -705,7 +894,79 @@
                 
                 let html = '<div style="padding: 1rem; background: #f9fafb; border-radius: 0.5rem; margin-bottom: 1rem;">';
                 
-                if (this.currentMode === 'enrichment' && data.enriched_content) {
+                if (this.currentMode === 'rag') {
+                    // Smart RAG Response with Router Metadata
+                    if (data.response) {
+                        html += `<h4 style="margin-bottom: 1rem; color: #1f2937;"><i class="fas fa-brain" style="color: #2563eb; margin-right: 0.5rem;"></i>Smart AI Response</h4>`;
+                        html += `<div class="rag-response">${data.response.replace(/\n/g, '<br>')}</div>`;
+                    }
+                    
+                    // Router Analysis Info
+                    if (data.routing_metadata && data.routing_metadata.query_analysis) {
+                        const analysis = data.routing_metadata.query_analysis;
+                        html += `<h4 style="margin-bottom: 1rem; color: #1f2937; margin-top: 2rem;"><i class="fas fa-route" style="color: #2563eb; margin-right: 0.5rem;"></i>AI Routing Analysis</h4>`;
+                        html += `<div class="insights-list">`;
+                        if (analysis.intent) {
+                            html += `<div class="insight-item"><i class="fas fa-bullseye"></i> Intent: ${analysis.intent}</div>`;
+                        }
+                        if (analysis.entities && analysis.entities.length > 0) {
+                            html += `<div class="insight-item"><i class="fas fa-building"></i> Entities: ${analysis.entities.join(', ')}</div>`;
+                        }
+                        if (analysis.symbols && analysis.symbols.length > 0) {
+                            html += `<div class="insight-item"><i class="fas fa-tag"></i> Symbols: ${analysis.symbols.join(', ')}</div>`;
+                        }
+                        if (analysis.confidence) {
+                            html += `<div class="insight-item"><i class="fas fa-check-circle"></i> Confidence: ${(analysis.confidence * 100).toFixed(0)}%</div>`;
+                        }
+                        if (data.routing_metadata.routing_plan && data.routing_metadata.routing_plan.primary_provider) {
+                            html += `<div class="insight-item"><i class="fas fa-server"></i> Provider: ${data.routing_metadata.routing_plan.primary_provider}</div>`;
+                        }
+                        html += `</div>`;
+                    }
+                    
+                    // Stock Data
+                    if (data.financial_data && data.financial_data.stocks && Object.keys(data.financial_data.stocks).length > 0) {
+                        html += `<h4 style="margin-bottom: 1rem; color: #1f2937; margin-top: 2rem;"><i class="fas fa-chart-line" style="color: #2563eb; margin-right: 0.5rem;"></i>Stock Data</h4>`;
+                        html += `<div class="stock-data-grid">`;
+                        Object.values(data.financial_data.stocks).forEach(stock => {
+                            const changeClass = stock.change_percent > 0 ? 'positive' : stock.change_percent < 0 ? 'negative' : 'neutral';
+                            const changeIcon = stock.change_percent > 0 ? 'fa-arrow-up' : stock.change_percent < 0 ? 'fa-arrow-down' : 'fa-minus';
+                            html += `<div class="stock-card">
+                                <div class="stock-header">
+                                    <h5>${stock.symbol}</h5>
+                                    <span class="stock-price">$${stock.price ? stock.price.toFixed(2) : 'N/A'}</span>
+                                </div>
+                                <div class="stock-change ${changeClass}">
+                                    <i class="fas ${changeIcon}"></i>
+                                    ${stock.change ? (stock.change > 0 ? '+' : '') + stock.change.toFixed(2) : 'N/A'} (${stock.change_percent ? (stock.change_percent > 0 ? '+' : '') + stock.change_percent.toFixed(2) : 'N/A'}%)
+                                </div>
+                                ${stock.volume ? `<div class="stock-volume">Volume: ${this.formatNumber(stock.volume)}</div>` : ''}
+                                ${stock.market_cap ? `<div class="stock-market-cap">Market Cap: ${this.formatNumber(stock.market_cap)}</div>` : ''}
+                            </div>`;
+                        });
+                        html += `</div>`;
+                    }
+                    
+                    // Key Insights
+                    if (data.key_insights && data.key_insights.length > 0) {
+                        html += `<h4 style="margin-bottom: 1rem; color: #1f2937; margin-top: 2rem;"><i class="fas fa-lightbulb" style="color: #2563eb; margin-right: 0.5rem;"></i>Key Insights</h4>`;
+                        html += `<div class="insights-list">`;
+                        data.key_insights.forEach(insight => {
+                            html += `<div class="insight-item"><i class="fas fa-arrow-right"></i> ${insight}</div>`;
+                        });
+                        html += `</div>`;
+                    }
+                    
+                    // Sources
+                    if (data.sources && data.sources.length > 0) {
+                        html += `<h4 style="margin-bottom: 1rem; color: #1f2937; margin-top: 2rem;"><i class="fas fa-link" style="color: #2563eb; margin-right: 0.5rem;"></i>Sources</h4>`;
+                        html += `<div class="sources-list">`;
+                        data.sources.forEach(source => {
+                            html += `<div class="source-item"><i class="fas fa-external-link-alt"></i> ${source}</div>`;
+                        });
+                        html += `</div>`;
+                    }
+                } else if (this.currentMode === 'enrichment' && data.enriched_content) {
                     html += `<h4 style="margin-bottom: 1rem; color: #1f2937;"><i class="fas fa-chart-line" style="color: #2563eb; margin-right: 0.5rem;"></i>Enriched Analysis</h4>`;
                     html += `<div style="white-space: pre-wrap; line-height: 1.6;">${data.enriched_content}</div>`;
                 } else if (this.currentMode === 'factcheck' && data.claims) {
@@ -786,6 +1047,18 @@
                 if (data.data_sources && data.data_sources.length > 1) confidence += 10;
                 if (data.processing_time_ms && data.processing_time_ms < 500) confidence += 5;
                 return Math.min(confidence, 99);
+            }
+            
+            formatNumber(num) {
+                if (num >= 1000000000) {
+                    return (num / 1000000000).toFixed(1) + 'B';
+                } else if (num >= 1000000) {
+                    return (num / 1000000).toFixed(1) + 'M';
+                } else if (num >= 1000) {
+                    return (num / 1000).toFixed(1) + 'K';
+                } else {
+                    return num.toString();
+                }
             }
 
             showError(message) {

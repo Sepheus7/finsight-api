@@ -652,4 +652,125 @@ input[type="range"]::-moz-range-thumb {
     .results-tabs {
         flex-wrap: wrap;
     }
+}
+
+/* Router Agent Message Styles */
+.message.router-agent {
+    border-left: 4px solid var(--primary-600);
+    background: linear-gradient(135deg, var(--primary-50) 0%, #ffffff 100%);
+}
+
+.message.router-agent .message-avatar {
+    background: var(--primary-600);
+}
+
+.routing-metadata-card {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.metadata-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-200);
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.metadata-header i {
+    color: var(--primary-600);
+}
+
+.toggle-metadata {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--gray-600);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s;
+}
+
+.toggle-metadata:hover {
+    background: var(--gray-200);
+}
+
+.routing-metadata-card.expanded .toggle-metadata i {
+    transform: rotate(180deg);
+}
+
+.metadata-content {
+    padding: 1rem;
+    display: none;
+}
+
+.routing-metadata-card.expanded .metadata-content {
+    display: block;
+}
+
+.metadata-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 0.875rem;
+}
+
+.metadata-row:last-child {
+    border-bottom: none;
+}
+
+.metadata-row .label {
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+.metadata-row .value {
+    color: var(--gray-900);
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.8rem;
+}
+
+/* Enhanced toggle switch for router agent */
+.enhancement-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: 0.5rem;
+    border: 1px solid var(--gray-200);
+}
+
+.enhancement-toggle label {
+    font-weight: 500;
+    color: var(--gray-700);
+    cursor: pointer;
+}
+
+.enhancement-toggle input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--primary-600);
+}
+
+/* Error message styling for router agent */
+.message.router-agent.error {
+    border-left-color: var(--error-500);
+    background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+}
+
+.message.router-agent.error .message-avatar {
+    background: var(--error-500);
 } 

@@ -11,6 +11,16 @@ import logging
 from aiohttp import web, web_response
 import json
 from datetime import datetime
+from dotenv import load_dotenv
+from typing import Dict, Any
+
+# Load environment variables from .env.local if it exists
+if os.path.exists('.env.local'):
+    load_dotenv('.env.local')
+    print("Loaded environment variables from .env.local")
+elif os.path.exists('.env'):
+    load_dotenv('.env')
+    print("Loaded environment variables from .env")
 
 # Add src to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
@@ -20,49 +30,70 @@ from handlers.financial_enrichment_handler import FinancialEnrichmentHandler
 from handlers.financial_enrichment_handler import lambda_handler as enrichment_lambda_handler
 from handlers.simple_fact_check_handler import lambda_handler as fact_check_lambda_handler
 from handlers.compliance_handler import lambda_handler as compliance_lambda_handler
+from handlers.enhanced_fact_check_handler_optimized import OptimizedFinancialFactChecker
+from handlers.compliance_handler import ComplianceChecker
+from handlers.rag_handler import FinancialRAGHandler
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Initialize the handlers
-enrichment_handler = FinancialEnrichmentHandler()
+try:
+    enrichment_handler = FinancialEnrichmentHandler()
+    fact_checker = OptimizedFinancialFactChecker(use_llm=True)
+    compliance_checker = ComplianceChecker()
+    rag_handler = FinancialRAGHandler()
+    logger.info("✅ All handlers initialized successfully")
+except Exception as e:
+    logger.error(f"❌ Failed to initialize handlers: {e}")
+    enrichment_handler = None
+    fact_checker = None
+    compliance_checker = None
+    rag_handler = None
 
 # Initialize chat handler with error handling
 try:
     from handlers.chat_handler import FinSightChatHandler
     chat_handler = FinSightChatHandler()
-    logger.info("Advanced chat handler initialized successfully")
-except ImportError as e:
-    logger.warning(f"Advanced chat handler not available: {e}")
-    try:
-        from handlers.simple_chat_handler import SimpleChatHandler
-        chat_handler = SimpleChatHandler()
-        logger.info("Simple chat handler initialized as fallback")
-    except Exception as fallback_error:
-        logger.error(f"Error initializing fallback chat handler: {fallback_error}")
-        chat_handler = None
+    logger.info("✅ Chat handler initialized successfully")
 except Exception as e:
-    logger.error(f"Error initializing chat handler: {e}")
-    try:
-        from handlers.simple_chat_handler import SimpleChatHandler
-        chat_handler = SimpleChatHandler()
-        logger.info("Simple chat handler initialized as fallback")
-    except Exception as fallback_error:
-        logger.error(f"Error initializing fallback chat handler: {fallback_error}")
-        chat_handler = None
+    logger.warning(f"⚠️ Chat handler initialization failed: {e}")
+    chat_handler = None
+
+# Initialize Bedrock Router Agent with error handling
+try:
+    from handlers.bedrock_router_agent import BedrockRouterAgent
+    router_agent = BedrockRouterAgent()
+    logger.info("✅ Bedrock Router Agent initialized successfully")
+except Exception as e:
+    logger.warning(f"⚠️ Bedrock Router Agent initialization failed: {e}")
+    router_agent = None
 
 async def health_check(request):
     """Health check endpoint"""
     return web.json_response({
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "version": "1.0.0-enhanced"
+        "handlers": {
+            "enrichment": enrichment_handler is not None,
+            "fact_checker": fact_checker is not None,
+            "compliance": compliance_checker is not None,
+            "rag": rag_handler is not None,
+            "chat": chat_handler is not None,
+            "router_agent": router_agent is not None
+        }
     })
 
 async def enrich_content(request):
-    """Main enrichment endpoint"""
+    """Financial enrichment endpoint"""
     try:
+        if not enrichment_handler:
+            return web.json_response({
+                "error": "Enrichment functionality is not available. Please check server configuration.",
+                "timestamp": datetime.now().isoformat()
+            }, status=503)
+        
         # Parse request data
         data = await request.json()
         logger.info(f"Received enrichment request: {data.get('content', '')[:100]}...")
@@ -263,6 +294,50 @@ async def chat_endpoint(request):
             "timestamp": datetime.now().isoformat()
         }, status=500)
 
+async def route_query_endpoint(request):
+    """Bedrock Router Agent endpoint for intelligent query routing"""
+    try:
+        if not router_agent:
+            return web.json_response({
+                "error": "Bedrock Router Agent is not available. Please check server configuration.",
+                "timestamp": datetime.now().isoformat()
+            }, status=503)
+        
+        # Parse request data
+        data = await request.json()
+        query = data.get('query', '').strip()
+        
+        if not query:
+            return web.json_response({
+                "error": "Query is required",
+                "timestamp": datetime.now().isoformat()
+            }, status=400)
+        
+        logger.info(f"Received router query: {query[:100]}...")
+        
+        # Extract optional parameters
+        conversation_id = data.get('conversation_id')
+        use_function_calling = data.get('use_function_calling', True)
+        
+        # Process query through router agent
+        start_time = datetime.now()
+        response = await router_agent.route_query(query)
+        processing_time = (datetime.now() - start_time).total_seconds() * 1000
+        
+        # Add processing time to response if not already present
+        if 'routing_metadata' in response and 'processing_time_ms' not in response['routing_metadata']:
+            response['routing_metadata']['processing_time_ms'] = processing_time
+        
+        logger.info(f"Router query processed in {processing_time:.2f}ms")
+        return web.json_response(response)
+        
+    except Exception as e:
+        logger.error(f"Router endpoint failed: {str(e)}")
+        return web.json_response({
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }, status=500)
+
 async def get_system_status(request):
     """Get system status and performance metrics"""
     try:
@@ -286,6 +361,38 @@ async def get_system_status(request):
             "timestamp": datetime.now().isoformat()
         }, status=500)
 
+async def get_config(request):
+    """Get frontend configuration including AWS credentials"""
+    try:
+        # Load environment variables
+        config = {
+            "aws": {
+                "region": os.getenv('AWS_REGION', 'us-east-1'),
+                "accessKeyId": os.getenv('AWS_ACCESS_KEY_ID'),
+                "secretAccessKey": os.getenv('AWS_SECRET_ACCESS_KEY')
+            },
+            "api": {
+                "baseUrl": f"http://localhost:{os.getenv('PORT', 8000)}"
+            },
+            "features": {
+                "chatEnabled": chat_handler is not None,
+                "bedrockEnabled": bool(os.getenv('AWS_ACCESS_KEY_ID') and os.getenv('AWS_SECRET_ACCESS_KEY'))
+            }
+        }
+        
+        # Only include AWS credentials if they exist
+        if not config["aws"]["accessKeyId"] or not config["aws"]["secretAccessKey"]:
+            config["aws"] = {"region": config["aws"]["region"]}
+        
+        return web.json_response(config)
+        
+    except Exception as e:
+        logger.error(f"Config endpoint failed: {str(e)}")
+        return web.json_response({
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }, status=500)
+
 async def cors_handler(request):
     """Handle CORS preflight requests"""
     return web.Response(
@@ -295,6 +402,34 @@ async def cors_handler(request):
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         }
     )
+
+async def rag_endpoint(request):
+    """Unified RAG endpoint with Bedrock Router orchestration"""
+    try:
+        data = await request.json()
+        query = data.get('query', '')
+        
+        if not query:
+            return web.json_response({'error': 'Query is required'}, status=400)
+        
+        logger.info(f"Received RAG query: {query[:50]}...")
+        
+        # Use Bedrock Router for intelligent orchestration
+        from handlers.bedrock_router_agent import BedrockRouterAgent
+        router = BedrockRouterAgent()
+        
+        response = await router.route_query(query)
+        
+        logger.info(f"RAG query processed in {response.get('routing_metadata', {}).get('processing_time_ms', 0):.2f}ms")
+        return web.json_response(response)
+        
+    except Exception as e:
+        logger.error(f"RAG endpoint error: {str(e)}")
+        return web.json_response({'error': str(e)}, status=500)
+
+async def rag_smart_endpoint(request):
+    """Legacy endpoint - redirects to unified RAG endpoint"""
+    return await rag_endpoint(request)
 
 def create_app():
     """Create the web application"""
@@ -320,12 +455,16 @@ def create_app():
     app.router.add_post('/fact-check', fact_check_content)
     app.router.add_post('/compliance', check_compliance)
     app.router.add_post('/chat', chat_endpoint)
+    app.router.add_post('/route-query', route_query_endpoint)
     app.router.add_get('/status', get_system_status)
+    app.router.add_get('/config', get_config)
+    app.router.add_post('/rag', rag_endpoint)
+    app.router.add_post('/rag-smart', rag_smart_endpoint)
     app.router.add_options('/{path:.*}', cors_handler)
 
-    # Serve index.html at root
+    # Serve enhanced interface at root
     async def index(request):
-        return web.FileResponse('frontend/src/index-rag.html')
+        return web.FileResponse('frontend/src/main-simple.html')
     app.router.add_get('/', index)
     
     # Serve chat interface

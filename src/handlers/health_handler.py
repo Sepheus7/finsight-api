@@ -26,7 +26,7 @@ def lambda_handler(event, context):
             "version": "1.0.0-serverless",
             "aws_request_id": getattr(context, 'aws_request_id', 'test-request'),
             "remaining_time_ms": getattr(context, 'get_remaining_time_in_millis', lambda: 30000)(),
-            "memory_limit_mb": getattr(context, 'memory_limit_in_mb', '1024')
+            "memory_limit_mb": getattr(context, 'memory_limit_in_mb', 1024)
         }
         
         return {

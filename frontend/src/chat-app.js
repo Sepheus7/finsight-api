@@ -4,11 +4,22 @@ class FinSightChat {
         this.currentChatId = null;
         this.chatHistory = this.loadChatHistory();
         this.isTyping = false;
+        this.api = new FinSightAPI();
         
         this.initializeElements();
         this.bindEvents();
         this.loadWelcomeScreen();
         this.updateChatHistory();
+        this.initializeAPI();
+    }
+    
+    async initializeAPI() {
+        try {
+            await this.api.loadConfig();
+            console.log('Chat API configuration loaded successfully');
+        } catch (error) {
+            console.warn('Failed to load chat API configuration:', error);
+        }
     }
     
     initializeElements() {
@@ -30,6 +41,7 @@ class FinSightChat {
         this.clearChatBtn = document.getElementById('clearChatBtn');
         this.exportChatBtn = document.getElementById('exportChatBtn');
         this.settingsBtn = document.getElementById('settingsBtn');
+        this.enhancementToggle = document.getElementById('enhancementToggle');
     }
     
     bindEvents() {
@@ -112,12 +124,23 @@ class FinSightChat {
         this.showTypingIndicator();
         
         try {
-            // Send to AI chat endpoint
-            const response = await this.callChatAPI(message);
-            this.hideTypingIndicator();
-            
-            // Add AI response
-            this.addMessage('assistant', response.response, response.data);
+            const useEnhancement = this.enhancementToggle.checked;
+            let response;
+
+            if (useEnhancement) {
+                // Call the new Bedrock Router Agent endpoint
+                response = await this.api.routeQuery(message, {
+                    conversation_id: this.currentChatId,
+                    use_function_calling: true
+                });
+                this.hideTypingIndicator();
+                this.addRouterAgentMessage(response);
+            } else {
+                // Fallback to simple chat endpoint
+                response = await this.callChatAPI(message);
+                this.hideTypingIndicator();
+                this.addMessage('assistant', response.response, response.data);
+            }
             
             // Save to chat history
             this.saveChatToHistory();
@@ -130,23 +153,11 @@ class FinSightChat {
     }
     
     async callChatAPI(message) {
-        const response = await fetch('/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                message: message,
-                chat_id: this.currentChatId,
-                context: this.getRecentContext()
-            })
+        return await this.api.makeRequest('POST', '/chat', {
+            message: message,
+            chat_id: this.currentChatId,
+            context: this.getRecentContext()
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
     }
     
     getRecentContext() {
@@ -234,7 +245,9 @@ class FinSightChat {
         dataCard.className = 'data-card';
         
         // Handle different data types
-        if (data.stock_data) {
+        if (data.fact_checks) {
+            return this.createFactCheckCard(data);
+        } else if (data.stock_data) {
             return this.createStockDataCard(data.stock_data);
         } else if (data.portfolio_data) {
             return this.createPortfolioDataCard(data.portfolio_data);
@@ -562,6 +575,103 @@ class FinSightChat {
         if (window.innerWidth <= 768) {
             this.sidebar.classList.remove('open');
         }
+    }
+
+    addRouterAgentMessage(response) {
+        // Handle the new Bedrock Router Agent response format
+        const message = {
+            id: Date.now(),
+            type: 'assistant',
+            text: response.response || 'No response received',
+            data: response.routing_metadata || null,
+            timestamp: new Date(),
+            isError: !!response.error,
+            isRouterAgent: true
+        };
+        
+        this.messages.push(message);
+        this.renderRouterAgentMessage(message);
+        this.scrollToBottom();
+    }
+    
+    renderRouterAgentMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${message.type} router-agent`;
+        messageDiv.dataset.messageId = message.id;
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.innerHTML = '<i class="fas fa-brain"></i>';
+        
+        const content = document.createElement('div');
+        content.className = 'message-content';
+        
+        const text = document.createElement('div');
+        text.className = 'message-text';
+        text.innerHTML = this.formatMessageText(message.text);
+        content.appendChild(text);
+        
+        // Add routing metadata if available
+        if (message.data) {
+            const metadata = this.createRoutingMetadataCard(message.data);
+            content.appendChild(metadata);
+        }
+        
+        const timestamp = document.createElement('div');
+        timestamp.className = 'message-timestamp';
+        timestamp.textContent = this.formatTime(message.timestamp);
+        content.appendChild(timestamp);
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(content);
+        this.messagesContainer.appendChild(messageDiv);
+    }
+
+    createRoutingMetadataCard(metadata) {
+        const card = document.createElement('div');
+        card.className = 'routing-metadata-card';
+        
+        card.innerHTML = `
+            <div class="metadata-header">
+                <i class="fas fa-cogs"></i>
+                <span>AI Agent Details</span>
+                <button class="toggle-metadata" onclick="this.parentElement.parentElement.classList.toggle('expanded')">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="metadata-content">
+                <div class="metadata-row">
+                    <span class="label">Processing Time:</span>
+                    <span class="value">${metadata.processing_time_ms || 0}ms</span>
+                </div>
+                <div class="metadata-row">
+                    <span class="label">Router Version:</span>
+                    <span class="value">${metadata.router_version || 'Unknown'}</span>
+                </div>
+                <div class="metadata-row">
+                    <span class="label">Stop Reason:</span>
+                    <span class="value">${metadata.llm_stop_reason || 'N/A'}</span>
+                </div>
+                ${metadata.input_token_count ? `
+                <div class="metadata-row">
+                    <span class="label">Input Tokens:</span>
+                    <span class="value">${metadata.input_token_count}</span>
+                </div>
+                ` : ''}
+                ${metadata.output_token_count ? `
+                <div class="metadata-row">
+                    <span class="label">Output Tokens:</span>
+                    <span class="value">${metadata.output_token_count}</span>
+                </div>
+                ` : ''}
+                <div class="metadata-row">
+                    <span class="label">Request ID:</span>
+                    <span class="value">${metadata.request_id || 'N/A'}</span>
+                </div>
+            </div>
+        `;
+        
+        return card;
     }
 }
 

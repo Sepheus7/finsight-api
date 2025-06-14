@@ -138,10 +138,29 @@ class DataAggregator:
     def _fetch_yahoo_data(self, symbol: str) -> Dict[str, Any]:
         """Synchronous Yahoo Finance fetch for thread pool"""
         try:
-            ticker = yf.Ticker(symbol)
+            # Clean and validate symbol
+            clean_symbol = symbol.strip().upper()
+            if not clean_symbol or len(clean_symbol) > 10:
+                logger.warning(f"Invalid symbol format: {symbol}")
+                return {}
+            
+            ticker = yf.Ticker(clean_symbol)
+            
+            # Get basic info first to validate symbol
+            info = ticker.info
+            if not info or 'symbol' not in info:
+                logger.warning(f"No info found for symbol: {clean_symbol}")
+                return {}
+            
+            # Get recent history
+            history = ticker.history(period='5d')
+            if history.empty:
+                logger.warning(f"No price history found for symbol: {clean_symbol}")
+                return {}
+            
             return {
-                'info': ticker.info,
-                'history': ticker.history(period='5d')
+                'info': info,
+                'history': history
             }
         except Exception as e:
             logger.error(f"Yahoo fetch error: {e}")
@@ -320,10 +339,22 @@ class DataAggregator:
             return None
     
     def _fetch_ticker_info(self, symbol: str) -> Dict[str, Any]:
-        """Synchronous ticker info fetch for thread pool"""
+        """Fetch ticker info for market context"""
         try:
-            ticker = yf.Ticker(symbol)
-            return ticker.info
+            # Clean and validate symbol
+            clean_symbol = symbol.strip().upper()
+            if not clean_symbol or len(clean_symbol) > 10:
+                logger.warning(f"Invalid symbol format: {symbol}")
+                return {}
+            
+            ticker = yf.Ticker(clean_symbol)
+            info = ticker.info
+            
+            if not info or 'symbol' not in info:
+                logger.warning(f"No ticker info found for symbol: {clean_symbol}")
+                return {}
+            
+            return info
         except Exception as e:
             logger.error(f"Ticker info error: {e}")
             return {}

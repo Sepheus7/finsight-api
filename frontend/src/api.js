@@ -4,20 +4,43 @@ class FinSightAPI {
         this.baseUrl = 'http://localhost:8000';
         this.awsRegion = 'us-east-1';
         this.awsCredentials = null;
+        this.config = null;
     }
 
     setBaseUrl(url) {
         this.baseUrl = url;
     }
 
-    async loadAWSCredentials() {
+    async loadConfig() {
         try {
-            const response = await fetch('/static/aws-credentials.json');
-            this.awsCredentials = await response.json();
+            const response = await fetch(`${this.baseUrl}/config`);
+            this.config = await response.json();
+            
+            // Set AWS credentials if available
+            if (this.config.aws && this.config.aws.accessKeyId && this.config.aws.secretAccessKey) {
+                this.awsCredentials = {
+                    accessKeyId: this.config.aws.accessKeyId,
+                    secretAccessKey: this.config.aws.secretAccessKey
+                };
+                this.awsRegion = this.config.aws.region || 'us-east-1';
+            }
+            
+            // Update base URL if provided in config
+            if (this.config.api && this.config.api.baseUrl) {
+                this.baseUrl = this.config.api.baseUrl;
+            }
+            
+            console.log('Configuration loaded successfully');
         } catch (error) {
-            console.error('Failed to load AWS credentials:', error);
+            console.error('Failed to load configuration:', error);
+            this.config = null;
             this.awsCredentials = null;
         }
+    }
+
+    async loadAWSCredentials() {
+        // Deprecated method - use loadConfig() instead
+        await this.loadConfig();
     }
 
     async makeRequest(method, endpoint, data = null) {
@@ -54,7 +77,7 @@ class FinSightAPI {
 
     async signRequest(url, method, data) {
         if (!this.awsCredentials) {
-            await this.loadAWSCredentials();
+            await this.loadConfig();
         }
 
         if (!this.awsCredentials) {
@@ -196,6 +219,53 @@ class FinSightAPI {
         };
         
         return this.makeRequest('POST', '/compliance', payload);
+    }
+
+    // Enhancement endpoint
+    async enhance(aiResponse, options = {}) {
+        const payload = {
+            ai_response: aiResponse,
+            enhancement_types: options.enhancement_types || ['financial_data', 'compliance'],
+            format_style: options.format_style || 'enhanced',
+            ...options
+        };
+        
+        return this.makeRequest('POST', '/enhance', payload);
+    }
+
+    // RAG Query endpoint
+    async rag(query, options = {}) {
+        const payload = {
+            query: query,
+            max_results: options.max_results || 10,
+            include_sources: options.include_sources !== false,
+            use_reranking: options.use_reranking !== false,
+            ...options
+        };
+        
+        return this.makeRequest('POST', '/rag', payload);
+    }
+
+    // Chat endpoint - Updated to use Bedrock Router Agent
+    async chat(message, options = {}) {
+        const payload = {
+            query: message,
+            conversation_id: options.conversation_id || null,
+            use_function_calling: options.use_function_calling !== false,
+            ...options
+        };
+        
+        return this.makeRequest('POST', '/chat', payload);
+    }
+
+    // Bedrock Router Agent endpoint (new)
+    async routeQuery(query, options = {}) {
+        const payload = {
+            query: query,
+            ...options
+        };
+        
+        return this.makeRequest('POST', '/route-query', payload);
     }
 
     // Lambda Handler Testing (for local development)

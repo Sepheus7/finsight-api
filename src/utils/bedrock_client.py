@@ -84,6 +84,42 @@ class BedrockLLMClient:
         except Exception as e:
             raise Exception(f"Failed to initialize Bedrock client: {e}")
     
+    def converse(self, messages: List[Dict[str, Any]], tools: List[Dict[str, Any]], system_prompt: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+        """
+        Send a conversation to Bedrock with tools (function calling)
+        
+        Args:
+            messages: A list of messages in the conversation.
+            tools: A list of tools the model can use.
+            system_prompt: Optional system prompt.
+            **kwargs: Additional parameters for the converse API.
+            
+        Returns:
+            The raw response from the Bedrock converse API.
+        """
+        try:
+            request = {
+                'modelId': self.model_id,
+                'messages': messages,
+                'toolConfig': {
+                    'tools': tools,
+                },
+                **kwargs
+            }
+
+            if system_prompt:
+                request['system'] = [{'text': system_prompt}]
+
+            response = self.client.converse(**request)
+            return response
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            logger.error(f"Bedrock converse API error: {error_code} - {e.response['Error']['Message']}")
+            raise Exception(f"Bedrock converse API error: {e.response['Error']['Message']}")
+        except Exception as e:
+            logger.error(f"Unexpected error in converse API call: {e}")
+            raise Exception(f"Unexpected error in converse API call: {e}")
+    
     def generate_text(self, prompt: str, system_prompt: Optional[str] = None, **kwargs) -> str:
         """
         Generate text using Bedrock model with automatic fallback to cheaper model
