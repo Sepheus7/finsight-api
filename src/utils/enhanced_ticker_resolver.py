@@ -251,50 +251,70 @@ class EnhancedTickerResolver:
             return False
 
     def _resolve_exact_match(self, company_name: str) -> Optional[TickerMatch]:
-        """Resolve using exact core mapping match"""
-        ticker = self.core_mappings.get(company_name)
-        if ticker:
+        """Try exact match against core mappings and aliases"""
+        company_lower = company_name.lower()
+        
+        # Check direct ticker symbols first (e.g., "AAPL", "MSFT")
+        if company_name.upper() in ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NFLX', 'NVDA', 'AMD', 'INTC']:
+            return TickerMatch(
+                company_name=company_name.upper(),
+                ticker=company_name.upper(),
+                confidence=1.0,
+                source="direct_symbol"
+            )
+        
+        # Check core mappings
+        for company, ticker in self.core_mappings.items():
+            if company_lower == company.lower():
+                return TickerMatch(
+                    company_name=company,
+                    ticker=ticker,
+                    confidence=1.0,
+                    source="core_mapping"
+                )
+        
+        # Check aliases
+        if company_lower in self.alias_to_ticker:
+            ticker = self.alias_to_ticker[company_lower]
             return TickerMatch(
                 company_name=company_name,
                 ticker=ticker,
                 confidence=0.95,
-                source="exact_match"
+                source="alias_mapping"
             )
-            
-        # Check aliases
-        ticker = self.alias_to_ticker.get(company_name.lower())
-        if ticker:
-            return TickerMatch(
-                company_name=company_name,
-                ticker=ticker,
-                confidence=0.9,
-                source="alias_match"
-            )
-            
+        
         return None
 
     def _resolve_fuzzy_match(self, company_name: str) -> Optional[TickerMatch]:
-        """Resolve using fuzzy string matching"""
+        """Try fuzzy matching against known companies"""
+        company_lower = company_name.lower()
         best_match = None
         best_score = 0.0
-        company_lower = company_name.lower()
         
-        # Check core mappings with fuzzy matching
-        for mapped_company, ticker in self.core_mappings.items():
-            mapped_lower = mapped_company.lower()
-            
-            # Simple fuzzy matching using containment and similarity
-            if company_lower in mapped_lower or mapped_lower in company_lower:
-                similarity = self._calculate_similarity(company_lower, mapped_lower)
-                if similarity > best_score and similarity > 0.7:
-                    best_score = similarity
-                    best_match = TickerMatch(
-                        company_name=mapped_company,
-                        ticker=ticker,
-                        confidence=similarity * 0.8,  # Reduce confidence for fuzzy match
-                        source="fuzzy_match"
-                    )
-                    
+        # Check against core mappings with fuzzy matching
+        for company, ticker in self.core_mappings.items():
+            similarity = self._calculate_similarity(company_lower, company.lower())
+            if similarity > 0.8 and similarity > best_score:
+                best_score = similarity
+                best_match = TickerMatch(
+                    company_name=company,
+                    ticker=ticker,
+                    confidence=similarity * 0.9,  # Reduce confidence for fuzzy matches
+                    source="fuzzy_mapping"
+                )
+        
+        # Check against aliases with fuzzy matching
+        for alias, ticker in self.alias_to_ticker.items():
+            similarity = self._calculate_similarity(company_lower, alias)
+            if similarity > 0.8 and similarity > best_score:
+                best_score = similarity
+                best_match = TickerMatch(
+                    company_name=company_name,
+                    ticker=ticker,
+                    confidence=similarity * 0.85,
+                    source="fuzzy_alias"
+                )
+        
         return best_match
 
     def _resolve_with_yfinance(self, company_name: str) -> Optional[TickerMatch]:

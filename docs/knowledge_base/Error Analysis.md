@@ -1,6 +1,6 @@
 # Error Analysis - FinSight Troubleshooting Guide
 
-*Last Updated: May 24, 2025*
+Last Updated: May 24, 2025
 
 ## Overview
 
@@ -11,6 +11,7 @@ Comprehensive analysis of common errors, failure patterns, and resolution strate
 ### 🚨 **Critical Errors (System Failure)**
 
 #### **E001: LLM Provider Complete Failure**
+
 ```python
 # Error Pattern
 {
@@ -22,12 +23,14 @@ Comprehensive analysis of common errors, failure patterns, and resolution strate
 ```
 
 **Root Causes:**
+
 - Network connectivity issues
 - API key expiration/invalidity
 - Provider service outages
 - Rate limit exhaustion
 
 **Resolution Strategy:**
+
 ```python
 def handle_llm_provider_failure():
     # Immediate fallback
@@ -44,12 +47,14 @@ def handle_llm_provider_failure():
 ```
 
 **Prevention:**
+
 - Health check monitoring every 60 seconds
 - Automatic provider rotation
 - Multiple API key rotation
 - Circuit breaker pattern implementation
 
 #### **E002: Database Connection Failure**
+
 ```python
 # Error Pattern
 {
@@ -61,6 +66,7 @@ def handle_llm_provider_failure():
 ```
 
 **Resolution Strategy:**
+
 1. **Immediate**: Retry with exponential backoff (3 attempts)
 2. **Short-term**: Switch to cached data if available
 3. **Long-term**: Queue request for later processing
@@ -68,6 +74,7 @@ def handle_llm_provider_failure():
 ### ⚠️ **Warning Errors (Degraded Service)**
 
 #### **W001: High Response Time**
+
 ```python
 # Error Pattern
 {
@@ -79,12 +86,14 @@ def handle_llm_provider_failure():
 ```
 
 **Common Causes:**
+
 - LLM provider latency spikes
 - External API slowness
 - Cold start penalty (Lambda)
 - High concurrent load
 
 **Mitigation:**
+
 ```python
 async def handle_slow_response():
     # Parallel processing where possible
@@ -103,6 +112,7 @@ async def handle_slow_response():
 ```
 
 #### **W002: Low Confidence Score**
+
 ```python
 # Warning Pattern
 {
@@ -114,12 +124,14 @@ async def handle_slow_response():
 ```
 
 **Causes:**
+
 - Ambiguous claim language
 - Insufficient data for verification
 - Conflicting sources
 - Novel claim types
 
 **Handling Strategy:**
+
 ```python
 def handle_low_confidence(result):
     if result.confidence < 0.5:
@@ -135,6 +147,7 @@ def handle_low_confidence(result):
 ### 📋 **Informational Errors (Processing Issues)**
 
 #### **I001: Ticker Resolution Failure**
+
 ```python
 # Info Pattern
 {
@@ -146,12 +159,14 @@ def handle_low_confidence(result):
 ```
 
 **Resolution Process:**
+
 1. **Fuzzy Matching**: Search similar company names
 2. **Alternative Sources**: SEC CIK lookup, ISIN/CUSIP search
 3. **Manual Flagging**: Queue for human review
 4. **Learning**: Update company mapping database
 
 #### **I002: Data Staleness Warning**
+
 ```python
 # Info Pattern
 {
@@ -201,6 +216,7 @@ error_statistics = {
 ### 📈 **Error Trends**
 
 #### **Monthly Error Rate Trend**
+
 ```python
 monthly_trends = {
     "january_2025": "2.1%",
@@ -216,6 +232,7 @@ monthly_trends = {
 ### 🤖 **OpenAI API Errors**
 
 #### **Rate Limiting (429)**
+
 ```python
 # Error Handling
 class OpenAIErrorHandler:
@@ -231,6 +248,7 @@ class OpenAIErrorHandler:
 ```
 
 #### **Context Length Exceeded (400)**
+
 ```python
 def handle_context_overflow(claim_text):
     # Truncate claim intelligently
@@ -245,6 +263,7 @@ def handle_context_overflow(claim_text):
 ### 🧠 **Anthropic API Errors**
 
 #### **Request Timeout**
+
 ```python
 def handle_anthropic_timeout():
     # Anthropic tends to be slower but more thorough
@@ -253,6 +272,7 @@ def handle_anthropic_timeout():
 ```
 
 #### **Content Policy Violation**
+
 ```python
 def handle_content_policy_error(claim):
     # Some financial content may trigger policies
@@ -264,6 +284,7 @@ def handle_content_policy_error(claim):
 ### 🦙 **Ollama Local Errors**
 
 #### **Model Not Available**
+
 ```python
 def handle_ollama_model_missing():
     available_models = get_ollama_models()
@@ -278,6 +299,7 @@ def handle_ollama_model_missing():
 ```
 
 #### **Ollama Service Down**
+
 ```python
 def handle_ollama_service_down():
     # Quick health check
@@ -291,6 +313,7 @@ def handle_ollama_service_down():
 ### 📈 **Yahoo Finance API Issues**
 
 #### **Symbol Not Found**
+
 ```python
 def handle_yahoo_symbol_error(ticker):
     # Try alternative ticker formats
@@ -310,6 +333,7 @@ def handle_yahoo_symbol_error(ticker):
 ```
 
 #### **Rate Limiting**
+
 ```python
 def handle_yahoo_rate_limit():
     # Yahoo Finance has unofficial rate limits
@@ -324,6 +348,7 @@ def handle_yahoo_rate_limit():
 ### 🏛️ **SEC EDGAR Errors**
 
 #### **Filing Not Available**
+
 ```python
 def handle_missing_sec_filing(cik, form_type, date):
     # Check if filing exists with different form type
@@ -343,6 +368,7 @@ def handle_missing_sec_filing(cik, form_type, date):
 ### 🔄 **Automatic Recovery**
 
 #### **Circuit Breaker Pattern**
+
 ```python
 class ServiceCircuitBreaker:
     def __init__(self, failure_threshold=5, timeout=60):
@@ -369,6 +395,7 @@ class ServiceCircuitBreaker:
 ```
 
 #### **Intelligent Fallback Chain**
+
 ```python
 def process_claim_with_fallbacks(claim):
     fallback_chain = [
@@ -392,6 +419,7 @@ def process_claim_with_fallbacks(claim):
 ### 🛠️ **Manual Recovery Procedures**
 
 #### **Provider API Key Rotation**
+
 ```bash
 # Emergency API key rotation procedure
 # 1. Update environment variables
@@ -406,6 +434,7 @@ curl -X POST https://api.finsight.com/health
 ```
 
 #### **Database Recovery**
+
 ```sql
 -- Check database connectivity
 SELECT 1 as health_check;
@@ -460,6 +489,7 @@ alerts:
 ### 🛡️ **Proactive Measures**
 
 #### **Health Check System**
+
 ```python
 async def comprehensive_health_check():
     checks = {
@@ -476,6 +506,7 @@ async def comprehensive_health_check():
 ```
 
 #### **Predictive Error Detection**
+
 ```python
 def predict_potential_failures():
     # Analyze error patterns
@@ -495,6 +526,7 @@ def predict_potential_failures():
 ### 📋 **Quality Assurance**
 
 #### **Automated Testing**
+
 ```python
 # Continuous integration tests
 def run_error_scenario_tests():
@@ -522,18 +554,21 @@ def run_error_scenario_tests():
 ### 📝 **Error Code Reference**
 
 #### **Critical Errors (E-series)**
+
 - **E001**: Complete LLM provider failure
 - **E002**: Database connection failure  
 - **E003**: Authentication/authorization failure
 - **E004**: Critical configuration missing
 
 #### **Warning Errors (W-series)**
+
 - **W001**: High response time
 - **W002**: Low confidence score
 - **W003**: Partial data availability
 - **W004**: Rate limit approaching
 
 #### **Informational (I-series)**
+
 - **I001**: Ticker resolution failure
 - **I002**: Data staleness warning
 - **I003**: Fallback provider used

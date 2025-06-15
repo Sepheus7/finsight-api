@@ -84,6 +84,42 @@ class BedrockLLMClient:
         except Exception as e:
             raise Exception(f"Failed to initialize Bedrock client: {e}")
     
+    def converse(self, messages: List[Dict[str, Any]], tools: List[Dict[str, Any]], system_prompt: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+        """
+        Send a conversation to Bedrock with tools (function calling)
+        
+        Args:
+            messages: A list of messages in the conversation.
+            tools: A list of tools the model can use.
+            system_prompt: Optional system prompt.
+            **kwargs: Additional parameters for the converse API.
+            
+        Returns:
+            The raw response from the Bedrock converse API.
+        """
+        try:
+            request = {
+                'modelId': self.model_id,
+                'messages': messages,
+                'toolConfig': {
+                    'tools': tools,
+                },
+                **kwargs
+            }
+
+            if system_prompt:
+                request['system'] = [{'text': system_prompt}]
+
+            response = self.client.converse(**request)
+            return response
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            logger.error(f"Bedrock converse API error: {error_code} - {e.response['Error']['Message']}")
+            raise Exception(f"Bedrock converse API error: {e.response['Error']['Message']}")
+        except Exception as e:
+            logger.error(f"Unexpected error in converse API call: {e}")
+            raise Exception(f"Unexpected error in converse API call: {e}")
+    
     def generate_text(self, prompt: str, system_prompt: Optional[str] = None, **kwargs) -> str:
         """
         Generate text using Bedrock model with automatic fallback to cheaper model
@@ -207,21 +243,20 @@ class BedrockLLMClient:
         return response_body.get('generation', '')
     
     def _generate_titan(self, model_id: str, prompt: str, system_prompt: Optional[str] = None, **kwargs) -> str:
-        """Generate text using Amazon Titan models via Bedrock"""
+        """Generate text using Titan models via Bedrock"""
         
-        # Combine system and user prompts for Titan
+        # Format prompt for Titan
         if system_prompt:
-            full_prompt = f"{system_prompt}\n\n{prompt}"
+            formatted_prompt = f"System: {system_prompt}\n\nUser: {prompt}"
         else:
-            full_prompt = prompt
+            formatted_prompt = prompt
         
         body = {
-            "inputText": full_prompt,
+            "inputText": formatted_prompt,
             "textGenerationConfig": {
                 "maxTokenCount": kwargs.get('max_tokens', 1000),
                 "temperature": kwargs.get('temperature', 0.1),
-                "topP": kwargs.get('top_p', 0.9),
-                "stopSequences": kwargs.get('stop_sequences', [])
+                "topP": kwargs.get('top_p', 0.9)
             }
         }
         
@@ -233,58 +268,49 @@ class BedrockLLMClient:
         )
         
         response_body = json.loads(response.get('body').read())
-        return response_body['results'][0]['outputText']
+        results = response_body.get('results', [])
+        if results:
+            return results[0].get('outputText', '')
+        else:
+            return ''
     
     def list_available_models(self) -> List[Dict[str, Any]]:
-        """List available Bedrock foundation models"""
+        """List available Bedrock models"""
         try:
             bedrock_client = boto3.client(
                 service_name='bedrock',
                 region_name=self.region
             )
-            
             response = bedrock_client.list_foundation_models()
             return response.get('modelSummaries', [])
         except Exception as e:
-            logger.error(f"Failed to list Bedrock models: {e}")
+            logger.error(f"Failed to list available models: {e}")
             return []
     
     def get_model_info(self) -> Dict[str, Any]:
-        """Get information about the current model"""
+        """Get information about current model"""
         return {
             "model_id": self.model_id,
-            "fallback_model_id": self.fallback_model_id,
-            "using_fallback": self.using_fallback,
             "region": self.region,
-            "provider": "bedrock"
+            "using_fallback": self.using_fallback,
+            "fallback_model_id": self.fallback_model_id
         }
     
     def get_cost_estimate(self) -> Dict[str, Any]:
-        """Get rough cost estimate for current model"""
-        cost_estimates = {
-            "anthropic.claude-3-haiku-20240307-v1:0": {"input": 0.25, "output": 1.25, "per": "1M tokens"},
-            "anthropic.claude-3-sonnet-20240229-v1:0": {"input": 3.00, "output": 15.00, "per": "1M tokens"},
-            "amazon.titan-text-express-v1": {"input": 0.20, "output": 0.60, "per": "1M tokens"},
-            "amazon.titan-text-lite-v1": {"input": 0.15, "output": 0.20, "per": "1M tokens"}
+        """Get cost estimate for current model"""
+        # This is a placeholder - actual costs would need to be calculated based on
+        # AWS pricing and usage metrics
+        return {
+            "model": self.model_id,
+            "estimated_cost_per_1k_tokens": 0.0,  # Would need actual pricing data
+            "using_fallback": self.using_fallback
         }
-        
-        return cost_estimates.get(self.model_id, {"input": "unknown", "output": "unknown", "per": "1M tokens"})
 
 
 def get_bedrock_client(region: Optional[str] = None, model_id: Optional[str] = None, fallback_model_id: Optional[str] = None) -> BedrockLLMClient:
-    """
-    Factory function to create Bedrock client with environment defaults
-    
-    Args:
-        region: AWS region (defaults to env var or us-east-1)
-        model_id: Model ID (defaults to env var or Claude 3 Haiku)
-        fallback_model_id: Fallback model ID (defaults to env var or Titan Express)
-        
-    Returns:
-        Configured BedrockLLMClient instance
-    """
-    region = region or os.getenv('FINSIGHT_BEDROCK_REGION', 'us-east-1')
-    model_id = model_id or os.getenv('FINSIGHT_BEDROCK_MODEL', 'anthropic.claude-3-haiku-20240307-v1:0')
-    fallback_model_id = fallback_model_id or os.getenv('FINSIGHT_BEDROCK_FALLBACK_MODEL', 'amazon.titan-text-express-v1')
-    
-    return BedrockLLMClient(region=region, model_id=model_id, fallback_model_id=fallback_model_id)
+    """Get or create Bedrock client instance"""
+    return BedrockLLMClient(
+        region=region or os.getenv('AWS_REGION', 'us-east-1'),
+        model_id=model_id or os.getenv('BEDROCK_MODEL_ID', 'anthropic.claude-3-haiku-20240307-v1:0'),
+        fallback_model_id=fallback_model_id or os.getenv('BEDROCK_FALLBACK_MODEL_ID', 'amazon.titan-text-express-v1')
+    )

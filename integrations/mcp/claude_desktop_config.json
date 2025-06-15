@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "finsight": {
+      "command": "/usr/bin/python3",
+      "args": ["/Users/romainboluda/Documents/PersonalProjects/FinSight/mcp_server_standalone.py"],
+      "env": {
+        "PYTHONPATH": "/Users/romainboluda/Documents/PersonalProjects/FinSight"
+      }
+    }
+  }
+} 

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSight Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-section { background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #17a2b8; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #results { margin-top: 20px; background: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>🧪 FinSight AWS Integration Test</h1>
+    
+    <div class="test-section">
+        <h3>🔍 Test Overview</h3>
+        <p>This page tests the direct frontend → AWS API integration without any local server dependencies.</p>
+        <p><strong>API Endpoint:</strong> <span class="info">https://jfho5me3zi.execute-api.us-east-1.amazonaws.com/dev</span></p>
+    </div>
+
+    <div class="test-section">
+        <h3>📡 Connection Test</h3>
+        <button onclick="testHealth()">Test AWS Health Endpoint</button>
+        <div id="health-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🚀 Enhancement Test</h3>
+        <button onclick="testEnhancement()">Test Content Enhancement</button>
+        <div id="enhancement-result"></div>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const API_BASE_URL = 'https://jfho5me3zi.execute-api.us-east-1.amazonaws.com/dev';
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = '<p class="info">Testing AWS health endpoint...</p>';
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const endTime = Date.now();
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ AWS API Health Check: PASSED</p>
+                        <p>Response time: ${endTime - startTime}ms</p>
+                        <p>Service: ${data.service}</p>
+                        <p>Version: ${data.version}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ Health check failed: ${response.status}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Connection failed: ${error.message}</p>`;
+            }
+        }
+
+        async function testEnhancement() {
+            const resultDiv = document.getElementById('enhancement-result');
+            resultDiv.innerHTML = '<p class="info">Testing content enhancement with real AWS Bedrock...</p>';
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/enhance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ai_response: {
+                            content: "This investment will guarantee 200% returns with zero risk. Buy now!",
+                            agent_id: "test_frontend",
+                            timestamp: new Date().toISOString()
+                        },
+                        enrichment_level: "comprehensive",
+                        fact_check: true,
+                        add_context: true
+                    })
+                });
+                const endTime = Date.now();
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Content Enhancement: PASSED</p>
+                        <p><strong>Processing time:</strong> ${endTime - startTime}ms</p>
+                        <p><strong>Quality score:</strong> ${Math.round(data.quality_score * 100)}%</p>
+                        <p><strong>Compliance flags:</strong> ${data.compliance_flags?.length || 0}</p>
+                        <p><strong>Context additions:</strong> ${data.context_additions?.length || 0}</p>
+                        <p><strong>Request ID:</strong> ${data.request_id}</p>
+                    `;
+                    
+                    // Show detailed results
+                    document.getElementById('results').innerHTML = `
+                        <h3>📊 Enhancement Results</h3>
+                        <h4>Original Content:</h4>
+                        <p style="background: #fff3cd; padding: 10px; border-radius: 5px;">${data.original_content}</p>
+                        <h4>Enhanced Content:</h4>
+                        <p style="background: #d4edda; padding: 10px; border-radius: 5px;">${data.enhanced_content}</p>
+                        <h4>Compliance Issues Detected:</h4>
+                        <ul>${data.compliance_flags?.map(flag => `<li style="color: #dc3545;">${flag}</li>`).join('') || '<li>None</li>'}</ul>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ Enhancement failed: ${response.status}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Enhancement request failed: ${error.message}</p>`;
+            }
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            testHealth();
+        });
+    </script>
+</body>
+</html>
