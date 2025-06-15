@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import re
+import asyncio
 from typing import List, Dict, Any, Optional
 from dataclasses import asdict
 
@@ -41,6 +42,13 @@ try:
 except ImportError:
     requests = None
     REQUESTS_AVAILABLE = False
+
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    aiohttp = None
+    AIOHTTP_AVAILABLE = False
 
 # Import models - handle both relative and absolute imports
 try:
@@ -200,6 +208,40 @@ class LLMClaimExtractor:
         except:
             return False
 
+    async def _make_ollama_request(self, text: str) -> List[FinancialClaim]:
+        """Make an asynchronous request to Ollama API"""
+        payload = {
+            "model": self.ollama_model,
+            "prompt": self._get_extraction_prompt(text),
+            "stream": False
+        }
+        
+        # Use sync requests wrapped in executor to avoid blocking the event loop
+        # This provides non-blocking async behavior while maintaining compatibility
+        if REQUESTS_AVAILABLE:
+            try:
+                import requests as requests_module  # Local import for type checking
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(
+                    None,
+                    lambda: requests_module.post(
+                        f"{self.ollama_base_url}/api/generate",
+                        json=payload,
+                        timeout=30
+                    )
+                )
+                if response.status_code == 200:
+                    return self._parse_llm_response(response.json()["response"], text)
+                else:
+                    return self._extract_with_regex(text)
+            except Exception as e:
+                logger.error(f"Ollama executor request failed: {e}")
+                return self._extract_with_regex(text)
+        else:
+            # No HTTP client available
+            logger.warning("No HTTP client available for Ollama requests")
+            return self._extract_with_regex(text)
+
     async def extract_claims(self, text: str) -> List[FinancialClaim]:
         """
         Extract financial claims from text using configured LLM provider
@@ -226,19 +268,8 @@ class LLMClaimExtractor:
                     temperature=0.1
                 )
                 return self._parse_llm_response(response, text)
-            elif self.provider == "ollama" and self.client == "ollama" and requests is not None:
-                response = requests.post(
-                    f"{self.ollama_base_url}/api/generate",
-                    json={
-                        "model": self.ollama_model,
-                        "prompt": self._get_extraction_prompt(text),
-                        "stream": False
-                    }
-                )
-                if response.status_code == 200:
-                    return self._parse_llm_response(response.json()["response"], text)
-                else:
-                    return self._extract_with_regex(text)
+            elif self.provider == "ollama" and self.client == "ollama":
+                return await self._make_ollama_request(text)
             elif self.provider == "openai" and openai is not None and isinstance(self.client, openai.OpenAI):
                 response = self.client.chat.completions.create(
                     model="gpt-4",

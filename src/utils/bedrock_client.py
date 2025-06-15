@@ -268,7 +268,11 @@ class BedrockLLMClient:
         )
         
         response_body = json.loads(response.get('body').read())
-        return response_body.get('results', [{}])[0].get('outputText', '')
+        results = response_body.get('results', [])
+        if results:
+            return results[0].get('outputText', '')
+        else:
+            return ''
     
     def list_available_models(self) -> List[Dict[str, Any]]:
         """List available Bedrock models"""

@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSight API v1 Showcase - External AI Agent Integration</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-50: #eff6ff;
+            --success-500: #10b981;
+            --warning-500: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-900);
+            background: var(--gray-50);
+        }
+        
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header */
+        .main-header {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .logo i {
+            font-size: 2rem;
+            color: #fbbf24;
+        }
+        
+        .logo-text {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+        }
+        
+        .hero-section {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, #ffffff 0%, var(--gray-50) 100%);
+            border-radius: 1.5rem;
+            margin-bottom: 3rem;
+            border: 1px solid var(--gray-200);
+        }
+        
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--gray-900);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--success-500) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.125rem;
+            color: var(--gray-600);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+        
+        .api-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-50);
+            color: var(--primary-700);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Demo Section */
+        .demo-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            border: 1px solid var(--gray-200);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .query-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .query-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .query-card:hover {
+            background: var(--primary-50);
+            border-color: var(--primary-600);
+            transform: translateY(-1px);
+        }
+        
+        .query-card.active {
+            background: var(--primary-50);
+            border-color: var(--primary-600);
+        }
+        
+        .query-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-900);
+        }
+        
+        .query-text {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .query-context {
+            color: var(--gray-500);
+            font-size: 0.75rem;
+            font-style: italic;
+        }
+        
+        /* Interactive Demo */
+        .interactive-demo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .demo-input {
+            background: var(--gray-50);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+        
+        .demo-output {
+            background: var(--gray-900);
+            color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+        }
+        
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        
+        .input-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary-600);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .textarea-field {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .demo-button {
+            background: var(--primary-600);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .demo-button:hover {
+            background: var(--primary-700);
+        }
+        
+        .demo-button:disabled {
+            background: var(--gray-400);
+            cursor: not-allowed;
+        }
+        
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .response-header {
+            color: var(--success-500);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .response-content {
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        
+        /* Code Examples */
+        .code-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .code-example {
+            background: var(--gray-900);
+            color: white;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        
+        .code-header {
+            background: var(--gray-800);
+            padding: 1rem;
+            font-weight: 500;
+            border-bottom: 1px solid var(--gray-700);
+        }
+        
+        .code-content {
+            padding: 1.5rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+        
+        /* Metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-600);
+        }
+        
+        .metric-label {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .interactive-demo {
+                grid-template-columns: 1fr;
+            }
+            
+            .code-examples {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <span class="logo-text">FinSight</span>
+                </div>
+                <nav class="nav-links">
+                    <a href="/" class="nav-link">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="/chat-ui" class="nav-link">
+                        <i class="fas fa-comments"></i> Chat
+                    </a>
+                    <a href="/health" class="nav-link">
+                        <i class="fas fa-heartbeat"></i> Status
+                    </a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero Section -->
+            <section class="hero-section">
+                <div class="api-badge">
+                    <i class="fas fa-code"></i>
+                    API v1.0
+                </div>
+                <h1 class="hero-title">
+                    FinSight <span class="gradient-text">API Showcase</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Discover how external AI agents can leverage our standardized API to access real-time financial data and make intelligent business decisions.
+                </p>
+            </section>
+
+            <!-- Interactive Demo -->
+            <section class="demo-section">
+                <h2 class="section-title">
+                    <i class="fas fa-play-circle"></i>
+                    Interactive API Demo
+                </h2>
+                <p style="color: var(--gray-600); margin-bottom: 1.5rem;">
+                    Try our API with real queries. Select a preset example or create your own custom query.
+                </p>
+
+                <!-- Query Examples -->
+                <div class="query-examples">
+                    <div class="query-card" data-query="What is Apple stock price?" data-context="Portfolio analysis for tech investment">
+                        <div class="query-title">📈 Stock Price Query</div>
+                        <div class="query-text">"What is Apple stock price?"</div>
+                        <div class="query-context">Context: Portfolio analysis for tech investment</div>
+                    </div>
+                    <div class="query-card" data-query="What is the US unemployment rate?" data-context="Economic analysis for investment strategy">
+                        <div class="query-title">📊 Economic Indicator</div>
+                        <div class="query-text">"What is the US unemployment rate?"</div>
+                        <div class="query-context">Context: Economic analysis for investment strategy</div>
+                    </div>
+                    <div class="query-card" data-query="What is Microsoft stock price?" data-context="Comparing tech giants for diversification">
+                        <div class="query-title">💼 Market Research</div>
+                        <div class="query-text">"What is Microsoft stock price?"</div>
+                        <div class="query-context">Context: Comparing tech giants for diversification</div>
+                    </div>
+                    <div class="query-card" data-query="What is the inflation rate in the UK?" data-context="International market assessment">
+                        <div class="query-title">🌍 Global Economics</div>
+                        <div class="query-text">"What is the inflation rate in the UK?"</div>
+                        <div class="query-context">Context: International market assessment</div>
+                    </div>
+                </div>
+
+                <!-- Interactive Demo -->
+                <div class="interactive-demo">
+                    <div class="demo-input">
+                        <h3 style="margin-bottom: 1rem; color: var(--gray-800);">
+                            <i class="fas fa-edit"></i> API Request
+                        </h3>
+                        <div class="input-group">
+                            <label class="input-label">Query</label>
+                            <input type="text" id="queryInput" class="input-field" placeholder="Enter your financial query..." value="What is Apple stock price?">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">Context (Optional)</label>
+                            <textarea id="contextInput" class="input-field textarea-field" placeholder="Provide context for your query...">Portfolio analysis for tech investment</textarea>
+                        </div>
+                        <button id="sendQuery" class="demo-button">
+                            <i class="fas fa-paper-plane"></i>
+                            Send Query
+                        </button>
+                    </div>
+                    <div class="demo-output">
+                        <div class="response-header">
+                            <i class="fas fa-terminal"></i> API Response
+                        </div>
+                        <div id="responseContent" class="response-content">
+Click "Send Query" to see the API response...
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Code Examples -->
+            <section class="demo-section">
+                <h2 class="section-title">
+                    <i class="fas fa-code"></i>
+                    Integration Examples
+                </h2>
+                <p style="color: var(--gray-600); margin-bottom: 1.5rem;">
+                    See how to integrate FinSight API into your applications and AI agents.
+                </p>
+
+                <div class="code-examples">
+                    <div class="code-example">
+                        <div class="code-header">
+                            <i class="fab fa-js"></i> JavaScript / Node.js
+                        </div>
+                        <div class="code-content">
+<span style="color: #7dd3fc;">const</span> response = <span style="color: #7dd3fc;">await</span> <span style="color: #fbbf24;">fetch</span>(<span style="color: #86efac;">'/api/v1/query'</span>, {
+  <span style="color: #f472b6;">method</span>: <span style="color: #86efac;">'POST'</span>,
+  <span style="color: #f472b6;">headers</span>: {
+    <span style="color: #86efac;">'Content-Type'</span>: <span style="color: #86efac;">'application/json'</span>
+  },
+  <span style="color: #f472b6;">body</span>: <span style="color: #fbbf24;">JSON.stringify</span>({
+    <span style="color: #f472b6;">query</span>: <span style="color: #86efac;">"What is Apple stock price?"</span>,
+    <span style="color: #f472b6;">context</span>: <span style="color: #86efac;">"Portfolio analysis"</span>
+  })
+});
+
+<span style="color: #7dd3fc;">const</span> data = <span style="color: #7dd3fc;">await</span> response.<span style="color: #fbbf24;">json</span>();
+<span style="color: #fbbf24;">console.log</span>(data.data.price); <span style="color: #6b7280;">// 196.45</span>
+                        </div>
+                    </div>
+
+                    <div class="code-example">
+                        <div class="code-header">
+                            <i class="fab fa-python"></i> Python
+                        </div>
+                        <div class="code-content">
+<span style="color: #7dd3fc;">import</span> requests
+
+payload = {
+    <span style="color: #86efac;">"query"</span>: <span style="color: #86efac;">"What is Apple stock price?"</span>,
+    <span style="color: #86efac;">"context"</span>: <span style="color: #86efac;">"Portfolio analysis"</span>
+}
+
+response = requests.<span style="color: #fbbf24;">post</span>(
+    <span style="color: #86efac;">"http://localhost:8000/api/v1/query"</span>,
+    <span style="color: #f472b6;">json</span>=payload
+)
+
+data = response.<span style="color: #fbbf24;">json</span>()
+<span style="color: #fbbf24;">print</span>(<span style="color: #f8fafc;">f</span><span style="color: #86efac;">"Price: ${data['data']['price']}"</span>)
+                        </div>
+                    </div>
+
+                    <div class="code-example">
+                        <div class="code-header">
+                            <i class="fas fa-terminal"></i> cURL
+                        </div>
+                        <div class="code-content">
+curl -X POST http://localhost:8000/api/v1/query \
+  -H <span style="color: #86efac;">"Content-Type: application/json"</span> \
+  -d <span style="color: #86efac;">'{
+    "query": "What is Apple stock price?",
+    "context": "Portfolio analysis"
+  }'</span>
+                        </div>
+                    </div>
+
+                    <div class="code-example">
+                        <div class="code-header">
+                            <i class="fas fa-robot"></i> AI Agent Integration
+                        </div>
+                        <div class="code-content">
+<span style="color: #7dd3fc;">class</span> <span style="color: #fbbf24;">FinancialAgent</span>:
+    <span style="color: #7dd3fc;">def</span> <span style="color: #fbbf24;">__init__</span>(<span style="color: #f472b6;">self</span>):
+        <span style="color: #f472b6;">self</span>.api_url = <span style="color: #86efac;">"http://localhost:8000/api/v1/query"</span>
+    
+    <span style="color: #7dd3fc;">async def</span> <span style="color: #fbbf24;">get_financial_data</span>(<span style="color: #f472b6;">self</span>, query, context):
+        payload = {<span style="color: #86efac;">"query"</span>: query, <span style="color: #86efac;">"context"</span>: context}
+        response = <span style="color: #7dd3fc;">await</span> <span style="color: #f472b6;">self</span>.session.<span style="color: #fbbf24;">post</span>(<span style="color: #f472b6;">self</span>.api_url, <span style="color: #f472b6;">json</span>=payload)
+        <span style="color: #7dd3fc;">return</span> <span style="color: #7dd3fc;">await</span> response.<span style="color: #fbbf24;">json</span>()
+    
+    <span style="color: #7dd3fc;">async def</span> <span style="color: #fbbf24;">analyze_portfolio</span>(<span style="color: #f472b6;">self</span>, stocks):
+        results = []
+        <span style="color: #7dd3fc;">for</span> stock <span style="color: #7dd3fc;">in</span> stocks:
+            data = <span style="color: #7dd3fc;">await</span> <span style="color: #f472b6;">self</span>.<span style="color: #fbbf24;">get_financial_data</span>(
+                <span style="color: #f8fafc;">f</span><span style="color: #86efac;">"What is {stock} stock price?"</span>,
+                <span style="color: #86efac;">"Portfolio analysis"</span>
+            )
+            results.<span style="color: #fbbf24;">append</span>(data)
+        <span style="color: #7dd3fc;">return</span> results
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MCP Server Integration -->
+            <section class="demo-section">
+                <h2 class="section-title">
+                    <i class="fas fa-plug"></i>
+                    MCP Server Integration
+                </h2>
+                <p class="section-description">
+                    FinSight includes a Model Context Protocol (MCP) server that provides standardized access for LLMs and AI agents. 
+                    Test the MCP tools directly or see integration examples.
+                </p>
+
+                <div class="interactive-demo">
+                    <div class="demo-input">
+                        <h3>MCP Tool Testing</h3>
+                        <div class="input-group">
+                            <label class="input-label">Select MCP Tool</label>
+                            <select id="mcpTool" class="input-field">
+                                <option value="get_stock_price">Get Stock Price</option>
+                                <option value="get_economic_data">Get Economic Data</option>
+                                <option value="get_company_info">Get Company Info</option>
+                                <option value="analyze_market">Analyze Market</option>
+                            </select>
+                        </div>
+                        <div class="input-group" id="mcpArgsGroup">
+                            <label class="input-label">Tool Arguments (JSON)</label>
+                            <textarea id="mcpArgs" class="input-field textarea-field" placeholder='{"symbol": "AAPL"}'></textarea>
+                        </div>
+                        <button id="testMcpTool" class="demo-button">
+                            <i class="fas fa-cogs"></i> Test MCP Tool
+                        </button>
+                        <div class="input-group" style="margin-top: 1rem;">
+                            <button id="startMcpServer" class="demo-button" style="background: var(--success-600);">
+                                <i class="fas fa-play"></i> Start MCP Server
+                            </button>
+                            <button id="stopMcpServer" class="demo-button" style="background: var(--error-600); margin-left: 0.5rem;">
+                                <i class="fas fa-stop"></i> Stop MCP Server
+                            </button>
+                        </div>
+                        <div id="mcpStatus" class="metric-card" style="margin-top: 1rem; text-align: left;">
+                            <div style="font-weight: 600; color: var(--gray-700);">MCP Server Status</div>
+                            <div id="mcpStatusText" style="color: var(--error-600);">Not Running</div>
+                        </div>
+                    </div>
+                    <div class="demo-output">
+                        <div class="response-header">MCP Response</div>
+                        <div class="response-content" id="mcpResponseContent">
+Select an MCP tool and click "Test MCP Tool" to see the response.
+
+Available Tools:
+• get_stock_price - Real-time stock data
+• get_economic_data - Economic indicators  
+• get_company_info - Company information
+• analyze_market - Market analysis
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-examples">
+                    <div class="code-example">
+                        <div class="code-header">
+                            <i class="fas fa-robot"></i> MCP Client Integration
+                        </div>
+                        <div class="code-content">
+<span style="color: #6b7280;"># Example: Using FinSight MCP Server with Claude Desktop</span>
+
+<span style="color: #7dd3fc;">import</span> json
+<span style="color: #7dd3fc;">from</span> mcp <span style="color: #7dd3fc;">import</span> ClientSession, StdioServerParameters
+
+<span style="color: #7dd3fc;">async def</span> <span style="color: #fbbf24;">use_finsight_mcp</span>():
+    <span style="color: #6b7280;"># Connect to FinSight MCP Server</span>
+    server_params = <span style="color: #fbbf24;">StdioServerParameters</span>(
+        command=<span style="color: #86efac;">"python"</span>,
+        args=[<span style="color: #86efac;">"mcp_server.py"</span>]
+    )
+    
+    <span style="color: #7dd3fc;">async with</span> <span style="color: #fbbf24;">ClientSession</span>(server_params) <span style="color: #7dd3fc;">as</span> session:
+        <span style="color: #6b7280;"># Initialize the session</span>
+        <span style="color: #7dd3fc;">await</span> session.<span style="color: #fbbf24;">initialize</span>()
+        
+        <span style="color: #6b7280;"># List available tools</span>
+        tools = <span style="color: #7dd3fc;">await</span> session.<span style="color: #fbbf24;">list_tools</span>()
+        <span style="color: #fbbf24;">print</span>(<span style="color: #f8fafc;">f</span><span style="color: #86efac;">"Available tools: {[t.name for t in tools]}"</span>)
+        
+        <span style="color: #6b7280;"># Call a tool</span>
+        result = <span style="color: #7dd3fc;">await</span> session.<span style="color: #fbbf24;">call_tool</span>(
+            <span style="color: #86efac;">"get_stock_price"</span>,
+            {<span style="color: #86efac;">"symbol"</span>: <span style="color: #86efac;">"AAPL"</span>}
+        )
+        <span style="color: #fbbf24;">print</span>(<span style="color: #f8fafc;">f</span><span style="color: #86efac;">"AAPL Price: {result.content[0].text}"</span>)
+                        </div>
+                    </div>
+
+                    <div class="code-example">
+                        <div class="code-header">
+                            <i class="fas fa-terminal"></i> MCP Server Commands
+                        </div>
+                        <div class="code-content">
+<span style="color: #6b7280;"># Start the MCP server</span>
+python mcp_server.py
+
+<span style="color: #6b7280;"># Test the MCP server</span>
+python mcp_server.py test
+
+<span style="color: #6b7280;"># Example MCP request (JSON-RPC 2.0)</span>
+{
+  <span style="color: #86efac;">"jsonrpc"</span>: <span style="color: #86efac;">"2.0"</span>,
+  <span style="color: #86efac;">"id"</span>: <span style="color: #86efac;">"1"</span>,
+  <span style="color: #86efac;">"method"</span>: <span style="color: #86efac;">"tools/call"</span>,
+  <span style="color: #86efac;">"params"</span>: {
+    <span style="color: #86efac;">"name"</span>: <span style="color: #86efac;">"get_stock_price"</span>,
+    <span style="color: #86efac;">"arguments"</span>: {
+      <span style="color: #86efac;">"symbol"</span>: <span style="color: #86efac;">"AAPL"</span>
+    }
+  }
+}
+                        </div>
+                    </div>
+
+                    <div class="code-example">
+                        <div class="code-header">
+                            <i class="fas fa-cog"></i> Claude Desktop Configuration
+                        </div>
+                        <div class="code-content">
+<span style="color: #6b7280;"># Add to Claude Desktop config.json</span>
+{
+  <span style="color: #86efac;">"mcpServers"</span>: {
+    <span style="color: #86efac;">"finsight"</span>: {
+      <span style="color: #86efac;">"command"</span>: <span style="color: #86efac;">"python"</span>,
+      <span style="color: #86efac;">"args"</span>: [<span style="color: #86efac;">"/path/to/FinSight/mcp_server.py"</span>],
+      <span style="color: #86efac;">"env"</span>: {
+        <span style="color: #86efac;">"FRED_API_KEY"</span>: <span style="color: #86efac;">"your_fred_api_key"</span>
+      }
+    }
+  }
+}
+
+<span style="color: #6b7280;"># Then restart Claude Desktop to load the MCP server</span>
+<span style="color: #6b7280;"># You'll see FinSight tools available in Claude!</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API Metrics -->
+            <section class="demo-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Live API Metrics
+                </h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value" id="totalQueries">-</div>
+                        <div class="metric-label">Total Queries</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="avgResponseTime">-</div>
+                        <div class="metric-label">Avg Response Time</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="successRate">-</div>
+                        <div class="metric-label">Success Rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="dataSources">-</div>
+                        <div class="metric-label">Data Sources</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Query examples interaction
+        document.querySelectorAll('.query-card').forEach(card => {
+            card.addEventListener('click', () => {
+                // Remove active class from all cards
+                document.querySelectorAll('.query-card').forEach(c => c.classList.remove('active'));
+                // Add active class to clicked card
+                card.classList.add('active');
+                
+                // Update input fields
+                document.getElementById('queryInput').value = card.dataset.query;
+                document.getElementById('contextInput').value = card.dataset.context;
+            });
+        });
+
+        // API Demo functionality
+        let queryCount = 0;
+        let totalResponseTime = 0;
+        let successfulQueries = 0;
+        const dataSources = new Set();
+
+        document.getElementById('sendQuery').addEventListener('click', async () => {
+            const button = document.getElementById('sendQuery');
+            const responseContent = document.getElementById('responseContent');
+            const query = document.getElementById('queryInput').value.trim();
+            const context = document.getElementById('contextInput').value.trim();
+
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+
+            // Update button state
+            button.disabled = true;
+            button.innerHTML = '<div class="loading-spinner"></div> Sending...';
+
+            // Show loading in response
+            responseContent.textContent = 'Sending request to FinSight API...\n\nPOST /api/v1/query\n{\n  "query": "' + query + '",\n  "context": "' + context + '"\n}\n\nWaiting for response...';
+
+            try {
+                const startTime = Date.now();
+                
+                const response = await fetch('/api/v1/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        context: context
+                    })
+                });
+
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                const data = await response.json();
+
+                // Update metrics
+                queryCount++;
+                totalResponseTime += responseTime;
+                if (response.ok) {
+                    successfulQueries++;
+                    if (data.sources) {
+                        data.sources.forEach(source => dataSources.add(source));
+                    }
+                }
+
+                // Display response
+                responseContent.textContent = JSON.stringify(data, null, 2);
+
+                // Update live metrics
+                updateMetrics();
+
+            } catch (error) {
+                responseContent.textContent = 'Error: ' + error.message;
+                queryCount++;
+            } finally {
+                // Reset button
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-paper-plane"></i> Send Query';
+            }
+        });
+
+        function updateMetrics() {
+            document.getElementById('totalQueries').textContent = queryCount;
+            document.getElementById('avgResponseTime').textContent = queryCount > 0 ? Math.round(totalResponseTime / queryCount) + 'ms' : '-';
+            document.getElementById('successRate').textContent = queryCount > 0 ? Math.round((successfulQueries / queryCount) * 100) + '%' : '-';
+            document.getElementById('dataSources').textContent = dataSources.size;
+        }
+
+        // Initialize with first example selected
+        document.querySelector('.query-card').click();
+
+        // MCP Server Integration
+        let mcpServerRunning = false;
+        let mcpServerProcess = null;
+
+        // Update MCP tool arguments based on selection
+        document.getElementById('mcpTool').addEventListener('change', (e) => {
+            const tool = e.target.value;
+            const argsTextarea = document.getElementById('mcpArgs');
+            
+            switch(tool) {
+                case 'get_stock_price':
+                    argsTextarea.value = '{"symbol": "AAPL"}';
+                    break;
+                case 'get_economic_data':
+                    argsTextarea.value = '{"indicator": "unemployment"}';
+                    break;
+                case 'get_company_info':
+                    argsTextarea.value = '{"symbol": "MSFT"}';
+                    break;
+                case 'analyze_market':
+                    argsTextarea.value = '{"query": "What is the current market sentiment?"}';
+                    break;
+            }
+        });
+
+        // Test MCP Tool
+        document.getElementById('testMcpTool').addEventListener('click', async () => {
+            const button = document.getElementById('testMcpTool');
+            const responseContent = document.getElementById('mcpResponseContent');
+            const tool = document.getElementById('mcpTool').value;
+            const argsText = document.getElementById('mcpArgs').value.trim();
+
+            if (!argsText) {
+                alert('Please enter tool arguments');
+                return;
+            }
+
+            let args;
+            try {
+                args = JSON.parse(argsText);
+            } catch (e) {
+                alert('Invalid JSON in arguments: ' + e.message);
+                return;
+            }
+
+            button.disabled = true;
+            button.innerHTML = '<div class="loading-spinner"></div> Testing...';
+
+            responseContent.textContent = `Testing MCP Tool: ${tool}\nArguments: ${JSON.stringify(args, null, 2)}\n\nSending MCP request...`;
+
+            try {
+                // Call the MCP test endpoint
+                const response = await fetch('/api/v1/mcp/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tool: tool,
+                        args: args
+                    })
+                });
+
+                const mcpResponse = await response.json();
+                responseContent.textContent = JSON.stringify(mcpResponse, null, 2);
+
+            } catch (error) {
+                const mcpError = {
+                    jsonrpc: "2.0",
+                    id: "test-" + Date.now(),
+                    error: {
+                        code: -32603,
+                        message: "Tool execution failed: " + error.message
+                    }
+                };
+                responseContent.textContent = JSON.stringify(mcpError, null, 2);
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-cogs"></i> Test MCP Tool';
+            }
+        });
+
+        // Start MCP Server
+        document.getElementById('startMcpServer').addEventListener('click', async () => {
+            const statusText = document.getElementById('mcpStatusText');
+            const startButton = document.getElementById('startMcpServer');
+            const stopButton = document.getElementById('stopMcpServer');
+
+            startButton.disabled = true;
+            startButton.innerHTML = '<div class="loading-spinner"></div> Starting...';
+
+            try {
+                const response = await fetch('/api/v1/mcp/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'started' || data.status === 'already_running') {
+                    mcpServerRunning = true;
+                    statusText.textContent = `Running (PID: ${data.pid || 'N/A'})`;
+                    statusText.style.color = 'var(--success-600)';
+                    stopButton.disabled = false;
+
+                    document.getElementById('mcpResponseContent').textContent = 
+`MCP Server Started Successfully!
+
+Status: ${data.message}
+${data.pid ? `Process ID: ${data.pid}` : ''}
+
+Server Info:
+• Protocol Version: 2024-11-05
+• Server Name: finsight-mcp-server
+• Version: 1.0.0
+• Available Tools: 4
+• Available Resources: 2
+
+The MCP server is now ready to accept tool calls from LLM clients.
+You can now test the tools above or connect from Claude Desktop.`;
+                } else {
+                    throw new Error(data.message || 'Failed to start MCP server');
+                }
+
+            } catch (error) {
+                statusText.textContent = 'Error starting server';
+                statusText.style.color = 'var(--error-600)';
+                document.getElementById('mcpResponseContent').textContent = 
+`Failed to start MCP Server
+
+Error: ${error.message}
+
+Please check the server logs for more details.`;
+            } finally {
+                startButton.disabled = false;
+                startButton.innerHTML = '<i class="fas fa-play"></i> Start MCP Server';
+            }
+        });
+
+        // Stop MCP Server
+        document.getElementById('stopMcpServer').addEventListener('click', async () => {
+            const statusText = document.getElementById('mcpStatusText');
+            const startButton = document.getElementById('startMcpServer');
+            const stopButton = document.getElementById('stopMcpServer');
+
+            stopButton.disabled = true;
+            stopButton.innerHTML = '<div class="loading-spinner"></div> Stopping...';
+
+            try {
+                const response = await fetch('/api/v1/mcp/stop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                mcpServerRunning = false;
+                statusText.textContent = 'Not Running';
+                statusText.style.color = 'var(--error-600)';
+                startButton.disabled = false;
+
+                document.getElementById('mcpResponseContent').textContent = 
+`MCP Server Stopped
+
+Status: ${data.message}
+
+The MCP server has been shut down gracefully.
+Click "Start MCP Server" to restart it.`;
+
+            } catch (error) {
+                document.getElementById('mcpResponseContent').textContent = 
+`Error stopping MCP Server
+
+Error: ${error.message}
+
+The server may have already been stopped or encountered an error.`;
+            } finally {
+                stopButton.disabled = true;
+                stopButton.innerHTML = '<i class="fas fa-stop"></i> Stop MCP Server';
+            }
+        });
+
+        // Initialize MCP section
+        document.getElementById('mcpTool').dispatchEvent(new Event('change'));
+        document.getElementById('stopMcpServer').disabled = true;
+    </script>
+</body>
+</html> 

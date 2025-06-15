@@ -129,7 +129,7 @@ Based on our testing, here's what you can expect:
 | **Economic Context** | ❌ None | ✅ Available |
 | **Accuracy** | ⚠️ Mock data | ✅ Live market data |
 
-## 🏗️ Architecture Overview
+## 🏗️ Project Structure
 
 ```text
 FinSight/
@@ -137,7 +137,7 @@ FinSight/
 │   ├── handlers/                 # Request handlers
 │   │   ├── rag_handler.py       # Main RAG logic
 │   │   ├── chat_handler.py      # Chat interface
-│   │   └── ...
+│   │   └── bedrock_router_agent.py # AI routing agent
 │   ├── integrations/            # Data source integrations
 │   │   ├── data_aggregator.py   # Multi-source data fetching
 │   │   └── ...
@@ -145,18 +145,27 @@ FinSight/
 │   ├── utils/                   # Utility functions
 │   ├── api_server.py           # HTTP server
 │   └── main.py                 # CLI interface
-├── frontend/                    # Web interface
-│   ├── src/
-│   │   ├── api.js              # API client
-│   │   └── performance-demo.html
-│   └── performance-demo.html    # Main demo page
+├── integrations/                # External integrations
+│   └── mcp/                    # Model Context Protocol
+│       ├── mcp_server.py       # Full MCP server
+│       ├── mcp_server_standalone.py # Standalone MCP server
+│       └── claude_desktop_config.json # Claude Desktop config
 ├── tests/                       # Test suite
-│   ├── test_rag_foundation_validation.py
-│   ├── demo_rag_performance.py
-│   └── reports/
-└── docs/                        # Documentation
-    ├── step-guides/             # Implementation guides
-    └── ...
+│   ├── agent_simulation/       # AI agent simulation tests
+│   ├── integration/            # Integration tests
+│   ├── reports/               # Test reports
+│   └── ...
+├── frontend/                    # Web interface
+│   ├── src/                    # Frontend source
+│   └── static/                 # Static assets
+├── deployment/                  # Deployment configurations
+│   ├── aws/                    # AWS CloudFormation templates
+│   ├── docker/                 # Docker configurations
+│   └── config/                 # Environment templates
+├── docs/                        # Documentation
+│   ├── development/            # Development guides
+│   └── knowledge_base/         # Knowledge base
+└── scripts/                     # Utility scripts
 ```
 
 ## 🔧 API Endpoints
